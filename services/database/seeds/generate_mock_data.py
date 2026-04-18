@@ -121,11 +121,19 @@ def _random_dates() -> tuple[date, date]:
 # ── SQL generation ─────────────────────────────────────────────────────────
 
 
+def _seeded_uuid() -> str:
+    return str(uuid.UUID(int=random.getrandbits(128), version=4))
+
+
 def _sql_escape(value: str) -> str:
     return value.replace("'", "''")
 
 
 def generate() -> str:
+    # Re-seed so every call is deterministic
+    Faker.seed(42)
+    random.seed(42)
+
     lines: list[str] = [
         "-- 003_mock_data.sql",
         "-- Auto-generated mock policyholder data.",
@@ -142,7 +150,7 @@ def generate() -> str:
 
         for _ in range(region.count):
             # Policyholder
-            ph_id = str(uuid.uuid4())
+            ph_id = _seeded_uuid()
             is_business = random.random() < 0.25
             ph_type = "business" if is_business else "individual"
             ph_name = fake.company() if is_business else fake.name()
@@ -161,7 +169,7 @@ def generate() -> str:
 
             for pt in chosen_types:
                 policy_counter += 1
-                pol_id = str(uuid.uuid4())
+                pol_id = _seeded_uuid()
                 pol_num = f"POL-2025-{policy_counter:05d}"
                 coverage, deductible, premium = _random_coverage(pt)
                 eff_date, exp_date = _random_dates()
@@ -180,7 +188,7 @@ def generate() -> str:
                 # Each policy gets 1-2 insured locations
                 num_locations = 1 if pt in ("life", "health", "auto") else random.choice([1, 2])
                 for loc_idx in range(num_locations):
-                    loc_id = str(uuid.uuid4())
+                    loc_id = _seeded_uuid()
                     lat, lon = _random_lat_lon(region)
                     country = _country_for_region(region)
                     city = random.choice(region.cities) if region.cities else ""
