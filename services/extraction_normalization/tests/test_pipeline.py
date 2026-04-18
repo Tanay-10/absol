@@ -67,28 +67,32 @@ class FailingSource(BaseSource):
 
 
 class TestRunPipeline:
-    def test_empty_sources_returns_empty(self):
-        result = asyncio.get_event_loop().run_until_complete(run_pipeline([]))
+    @pytest.mark.asyncio
+    async def test_empty_sources_returns_empty(self):
+        result = await run_pipeline([])
         assert result == []
 
-    def test_single_source_returns_events(self):
+    @pytest.mark.asyncio
+    async def test_single_source_returns_events(self):
         src = FakeSource("test", [{"id": "1", "title": "EQ1"}, {"id": "2", "title": "EQ2"}])
-        result = asyncio.get_event_loop().run_until_complete(run_pipeline([src]))
+        result = await run_pipeline([src])
         assert len(result) == 2
         assert result[0].canonical_id == "test:1"
         assert result[1].canonical_id == "test:2"
 
-    def test_multiple_sources_merged(self):
+    @pytest.mark.asyncio
+    async def test_multiple_sources_merged(self):
         s1 = FakeSource("usgs", [{"id": "a"}])
         s2 = FakeSource("gdacs", [{"id": "b"}, {"id": "c"}])
-        result = asyncio.get_event_loop().run_until_complete(run_pipeline([s1, s2]))
+        result = await run_pipeline([s1, s2])
         assert len(result) == 3
         ids = {e.canonical_id for e in result}
         assert ids == {"usgs:a", "gdacs:b", "gdacs:c"}
 
-    def test_failing_normalize_skipped(self):
+    @pytest.mark.asyncio
+    async def test_failing_normalize_skipped(self):
         src = FailingSource()
-        result = asyncio.get_event_loop().run_until_complete(run_pipeline([src]))
+        result = await run_pipeline([src])
         assert result == []
 
 

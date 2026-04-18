@@ -39,6 +39,11 @@ INGESTION_BATCH_ENDPOINT = os.getenv(
     "INGESTION_BATCH_ENDPOINT", "/ingestion/events/batch"
 )
 
+# ── Supabase (PostgREST) ────────────────────────────────────────────────────
+
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+
 # ── Pipeline tuning ─────────────────────────────────────────────────────────
 
 FETCH_TIMEOUT_SECONDS = int(os.getenv("FETCH_TIMEOUT_SECONDS", "30"))

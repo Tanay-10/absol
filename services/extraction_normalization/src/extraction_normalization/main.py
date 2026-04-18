@@ -7,6 +7,7 @@ import json
 import sys
 
 from extraction_normalization.export.backend_client import BackendClient
+from extraction_normalization.export.supabase_client import SupabaseClient
 from extraction_normalization.export.writer import JSONLWriter, RawPayloadWriter
 from extraction_normalization.normalize.dedupe import Deduplicator
 from extraction_normalization.pipeline import build_batch_payload, run_pipeline
@@ -29,6 +30,7 @@ def get_default_sources() -> list[BaseSource]:
 async def main(
     push_to_backend: bool = False,
     write_artifacts: bool = True,
+    push_to_db: bool = False,
 ) -> None:
     sources = get_default_sources()
     deduplicator = Deduplicator()
@@ -38,6 +40,8 @@ async def main(
         exporters.append(JSONLWriter())
     if push_to_backend:
         exporters.append(BackendClient())
+    if push_to_db:
+        exporters.append(SupabaseClient())
 
     print(f"[pipeline] Starting extraction from {len(sources)} sources...")
 
@@ -74,4 +78,5 @@ async def main(
 if __name__ == "__main__":
     push = "--push" in sys.argv
     no_artifacts = "--no-artifacts" in sys.argv
-    asyncio.run(main(push_to_backend=push, write_artifacts=not no_artifacts))
+    db = "--db" in sys.argv
+    asyncio.run(main(push_to_backend=push, write_artifacts=not no_artifacts, push_to_db=db))
