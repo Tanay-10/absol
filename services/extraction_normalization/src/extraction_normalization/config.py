@@ -39,10 +39,22 @@ INGESTION_BATCH_ENDPOINT = os.getenv(
     "INGESTION_BATCH_ENDPOINT", "/ingestion/events/batch"
 )
 
-# ── Supabase (PostgREST) ────────────────────────────────────────────────────
+# ── SQLite database ─────────────────────────────────────────────────────────
 
-SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+
+def _find_project_root() -> Path:
+    p = Path(__file__).resolve().parent
+    for _ in range(10):
+        if (p / "PROJECT_PLAN.md").exists():
+            return p
+        p = p.parent
+    return Path.cwd()
+
+
+DATABASE_PATH = os.getenv(
+    "DATABASE_PATH",
+    str(_find_project_root() / "data" / "insureshield.db"),
+)
 
 # ── Pipeline tuning ─────────────────────────────────────────────────────────
 

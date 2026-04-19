@@ -7,7 +7,7 @@ import json
 import sys
 
 from extraction_normalization.export.backend_client import BackendClient
-from extraction_normalization.export.supabase_client import SupabaseClient
+from extraction_normalization.export.db_client import DbClient
 from extraction_normalization.export.writer import JSONLWriter, RawPayloadWriter
 from extraction_normalization.normalize.dedupe import Deduplicator
 from extraction_normalization.pipeline import build_batch_payload, run_pipeline
@@ -41,7 +41,7 @@ async def main(
     if push_to_backend:
         exporters.append(BackendClient())
     if push_to_db:
-        exporters.append(SupabaseClient())
+        exporters.append(DbClient())
 
     print(f"[pipeline] Starting extraction from {len(sources)} sources...")
 
