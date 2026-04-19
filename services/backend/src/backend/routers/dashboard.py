@@ -3,33 +3,45 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from backend.supabase import SupabaseClient
+from backend.database import db
 
 router = APIRouter(tags=["dashboard"])
-db = SupabaseClient()
 
 
 @router.get("/dashboard/summary")
 async def dashboard_summary():
-    events = await db.select("events", columns="id", params={"limit": "10000"})
-    alerts = await db.select("alerts", columns="id,alert_level,estimated_claim_count,estimated_total_amount", params={"limit": "10000"})
-    policies = await db.select("policies", columns="id", params={"limit": "10000"})
-    matches = await db.select("exposure_matches", columns="id", params={"limit": "10000"})
+    counts = await db.fetch_one("""
+        SELECT
+            (SELECT COUNT(*) FROM events) AS total_events,
+            (SELECT COUNT(*) FROM alerts) AS total_alerts,
+            (SELECT COUNT(*) FROM alerts WHERE alert_level IN ('high', 'critical')) AS active_alerts,
+            (SELECT COUNT(*) FROM policies) AS total_policies,
+            (SELECT COUNT(*) FROM exposure_matches) AS total_matches,
+            (SELECT COALESCE(SUM(estimated_claim_count), 0) FROM alerts) AS estimated_claims,
+            (SELECT COALESCE(SUM(estimated_total_amount), 0) FROM alerts) AS estimated_total_amount
+    """)
 
-    active_alerts = [a for a in alerts if a.get("alert_level") in ("high", "critical")]
+    breakdown = await db.fetch_one("""
+        SELECT
+            COALESCE(SUM(CASE WHEN alert_level = 'low' THEN 1 ELSE 0 END), 0) AS low,
+            COALESCE(SUM(CASE WHEN alert_level = 'medium' THEN 1 ELSE 0 END), 0) AS medium,
+            COALESCE(SUM(CASE WHEN alert_level = 'high' THEN 1 ELSE 0 END), 0) AS high,
+            COALESCE(SUM(CASE WHEN alert_level = 'critical' THEN 1 ELSE 0 END), 0) AS critical
+        FROM alerts
+    """)
 
     return {
-        "total_events": len(events),
-        "total_alerts": len(alerts),
-        "active_alerts": len(active_alerts),
-        "total_policies": len(policies),
-        "total_matches": len(matches),
-        "estimated_claims": sum(a.get("estimated_claim_count", 0) for a in alerts),
-        "estimated_total_amount": sum(float(a.get("estimated_total_amount", 0)) for a in alerts),
+        "total_events": counts["total_events"],
+        "total_alerts": counts["total_alerts"],
+        "active_alerts": counts["active_alerts"],
+        "total_policies": counts["total_policies"],
+        "total_matches": counts["total_matches"],
+        "estimated_claims": counts["estimated_claims"],
+        "estimated_total_amount": float(counts["estimated_total_amount"]),
         "alert_breakdown": {
-            "low": sum(1 for a in alerts if a.get("alert_level") == "low"),
-            "medium": sum(1 for a in alerts if a.get("alert_level") == "medium"),
-            "high": sum(1 for a in alerts if a.get("alert_level") == "high"),
-            "critical": sum(1 for a in alerts if a.get("alert_level") == "critical"),
+            "low": breakdown["low"],
+            "medium": breakdown["medium"],
+            "high": breakdown["high"],
+            "critical": breakdown["critical"],
         },
     }

@@ -3,10 +3,9 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query
 
-from backend.supabase import SupabaseClient
+from backend.database import db
 
 router = APIRouter(tags=["events"])
-db = SupabaseClient()
 
 
 @router.get("/events")
@@ -15,38 +14,68 @@ async def list_events(
     severity: str | None = Query(None),
     limit: int = Query(50, le=200),
 ):
-    params: dict[str, str] = {"order": "detected_at.desc", "limit": str(limit)}
+    conditions: list[str] = []
+    params: list = []
     if event_type:
-        params["event_type"] = f"eq.{event_type}"
+        conditions.append("event_type = ?")
+        params.append(event_type)
     if severity:
-        params["severity_label"] = f"eq.{severity}"
-    return await db.select("events", params=params)
+        conditions.append("severity_label = ?")
+        params.append(severity)
+    where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+    params.append(limit)
+    return await db.fetch_all(
+        f"SELECT * FROM events {where} ORDER BY detected_at DESC LIMIT ?",
+        tuple(params),
+    )
 
 
 @router.get("/events/{event_id}")
 async def get_event(event_id: str):
-    rows = await db.select("events", params={"id": f"eq.{event_id}"})
-    if not rows:
+    event = await db.fetch_one("SELECT * FROM events WHERE id = ?", (event_id,))
+    if not event:
         raise HTTPException(404, "Event not found")
-    event = rows[0]
 
-    # Fetch related data
-    zones = await db.select("impact_zones", params={"event_id": f"eq.{event_id}"})
-    matches = await db.select(
-        "exposure_matches",
-        params={"event_id": f"eq.{event_id}"},
-        columns="*,policies(*,policyholders(*)),insured_locations(*)",
+    zone = await db.fetch_one(
+        "SELECT * FROM impact_zones WHERE event_id = ?", (event_id,)
     )
-    estimates = await db.select(
-        "claim_estimates",
-        params={"exposure_match_id": f"in.({','.join(m['id'] for m in matches)})"}
-    ) if matches else []
-    alerts_data = await db.select("alerts", params={"event_id": f"eq.{event_id}"})
+
+    matches = await db.fetch_all(
+        "SELECT * FROM exposure_matches WHERE event_id = ?", (event_id,)
+    )
+
+    # Enrich matches with policy, policyholder, and location data
+    for match in matches:
+        policy = await db.fetch_one("SELECT * FROM policies WHERE id = ?", (match["policy_id"],))
+        if policy:
+            holder = await db.fetch_one(
+                "SELECT * FROM policyholders WHERE id = ?", (policy["policyholder_id"],)
+            )
+            policy["policyholders"] = holder
+            match["policies"] = policy
+        location = await db.fetch_one(
+            "SELECT * FROM insured_locations WHERE id = ?", (match["location_id"],)
+        )
+        match["insured_locations"] = location
+
+    # Fetch claim estimates for these matches
+    estimates = []
+    if matches:
+        match_ids = [m["id"] for m in matches]
+        placeholders = ", ".join("?" * len(match_ids))
+        estimates = await db.fetch_all(
+            f"SELECT * FROM claim_estimates WHERE exposure_match_id IN ({placeholders})",
+            tuple(match_ids),
+        )
+
+    alert = await db.fetch_one(
+        "SELECT * FROM alerts WHERE event_id = ?", (event_id,)
+    )
 
     return {
         "event": event,
-        "impact_zone": zones[0] if zones else None,
+        "impact_zone": zone,
         "matches": matches,
         "estimates": estimates,
-        "alert": alerts_data[0] if alerts_data else None,
+        "alert": alert,
     }
