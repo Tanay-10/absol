@@ -16,27 +16,30 @@ CREATE TABLE IF NOT EXISTS events (
     id              TEXT PRIMARY KEY,
     canonical_id    TEXT UNIQUE NOT NULL,
     source          TEXT NOT NULL,
-    event_family    TEXT NOT NULL CHECK (event_family IN ('natural', 'human_caused')),
+    source_event_id TEXT NOT NULL,
+    event_family    TEXT NOT NULL,
     event_type      TEXT NOT NULL,
     event_subtype   TEXT,
     title           TEXT NOT NULL,
     summary         TEXT,
-    severity_label  TEXT NOT NULL CHECK (severity_label IN ('minor','moderate','major','severe','critical')),
-    severity_score  INTEGER NOT NULL CHECK (severity_score BETWEEN 0 AND 100),
-    status          TEXT NOT NULL DEFAULT 'unknown' CHECK (status IN ('active','ended','unknown')),
-    occurred_at     TEXT,
-    detected_at     TEXT NOT NULL,
-    geometry_type   TEXT NOT NULL CHECK (geometry_type IN ('point','bbox','admin_area','polygon')),
-    latitude        REAL CHECK (latitude BETWEEN -90 AND 90),
-    longitude       REAL CHECK (longitude BETWEEN -180 AND 180),
+    severity_label  TEXT NOT NULL,
+    severity_score  REAL NOT NULL,
+    status          TEXT DEFAULT 'active',
+    confidence      REAL,
+    occurred_at     TEXT NOT NULL,
+    updated_at      TEXT,
+    detected_at     TEXT NOT NULL DEFAULT (datetime('now')),
+    geometry_type   TEXT DEFAULT 'point',
+    latitude        REAL,
+    longitude       REAL,
     bbox            TEXT,
     region_name     TEXT,
-    country_codes   TEXT DEFAULT '[]',
-    severity_inputs TEXT DEFAULT '{}',
+    country_codes   TEXT,
+    severity_inputs TEXT,
     source_url      TEXT,
-    schema_version  TEXT NOT NULL DEFAULT 'v1',
-    created_at      TEXT DEFAULT (datetime('now')),
-    updated_at      TEXT DEFAULT (datetime('now'))
+    raw_payload_ref TEXT,
+    normalized_at   TEXT NOT NULL,
+    schema_version  TEXT DEFAULT 'v1'
 );
 
 CREATE INDEX IF NOT EXISTS idx_events_type ON events (event_type);
@@ -44,17 +47,15 @@ CREATE INDEX IF NOT EXISTS idx_events_occurred ON events (occurred_at DESC);
 CREATE INDEX IF NOT EXISTS idx_events_location ON events (latitude, longitude);
 
 CREATE TABLE IF NOT EXISTS impact_zones (
-    id           TEXT PRIMARY KEY,
-    event_id     TEXT UNIQUE NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-    zone_type    TEXT NOT NULL CHECK (zone_type IN ('radius', 'bbox', 'admin_area')),
-    center_lat   REAL,
-    center_lon   REAL,
-    radius_km    REAL,
-    bbox         TEXT,
-    admin_region TEXT,
-    country_code TEXT,
-    computed_at  TEXT DEFAULT (datetime('now'))
+    id                   TEXT PRIMARY KEY,
+    event_id             TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    zone_type            TEXT NOT NULL,
+    radius_km            REAL,
+    bbox_json            TEXT,
+    admin_regions        TEXT,
+    estimated_population INTEGER
 );
+CREATE UNIQUE INDEX IF NOT EXISTS idx_impact_zones_event_id ON impact_zones(event_id);
 
 CREATE TABLE IF NOT EXISTS policyholders (
     id         TEXT PRIMARY KEY,
