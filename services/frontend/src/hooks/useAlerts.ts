@@ -1,12 +1,14 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
-import { supabase } from "@/lib/supabase";
 import type { Alert } from "@/lib/types";
+
+const POLL_INTERVAL_MS = 15_000; // 15 seconds
 
 export function useAlerts() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -21,20 +23,9 @@ export function useAlerts() {
 
   useEffect(() => {
     refresh();
-
-    const channel = supabase
-      .channel("alerts-realtime")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "alerts" },
-        () => {
-          refresh();
-        }
-      )
-      .subscribe();
-
+    timerRef.current = setInterval(refresh, POLL_INTERVAL_MS);
     return () => {
-      supabase.removeChannel(channel);
+      if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [refresh]);
 
