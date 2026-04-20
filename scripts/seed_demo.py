@@ -312,6 +312,9 @@ async def seed_demo_data(reset: bool = False) -> None:
         await db.execute("DELETE FROM events WHERE source = 'demo'")
         # Also clear extra locations from previous demo runs
         await db.execute("DELETE FROM insured_locations WHERE label LIKE 'Demo:%'")
+        await db.execute("DELETE FROM insured_locations WHERE policy_id IN (SELECT id FROM policies WHERE policy_number LIKE 'DEMO-%')")
+        await db.execute("DELETE FROM policies WHERE policy_number LIKE 'DEMO-%'")
+        await db.execute("DELETE FROM policyholders WHERE email LIKE 'risk@%'")
 
     # -----------------------------------------------------------------
     # STEP 1: Enrich policy perils to be more realistic
