@@ -124,7 +124,7 @@ CREATE TABLE IF NOT EXISTS claim_estimates (
 
 CREATE TABLE IF NOT EXISTS alerts (
     id                       TEXT PRIMARY KEY,
-    event_id                 TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    event_id                 TEXT UNIQUE NOT NULL REFERENCES events(id) ON DELETE CASCADE,
     alert_level              TEXT NOT NULL CHECK (alert_level IN ('low','medium','high','critical')),
     total_policies_affected  INTEGER NOT NULL,
     estimated_claim_count    INTEGER NOT NULL,
