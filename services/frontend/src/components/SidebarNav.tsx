@@ -5,27 +5,24 @@ import { usePathname } from "next/navigation";
 import { SeverityBadge } from "@/components/SeverityBadge";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Dashboard", hint: "Live signals", symbol: "◉", enabled: true },
+  { href: "/", label: "Dashboard", hint: "Live signals", symbol: "◉" },
   {
     href: "/impact",
     label: "Impact Analysis",
     hint: "Exposure framing",
     symbol: "◎",
-    enabled: false,
   },
   {
     href: "/readiness",
     label: "Readiness",
     hint: "Hybrid rehearsal",
     symbol: "◌",
-    enabled: false,
   },
   {
     href: "/pipeline",
     label: "Pipeline",
     hint: "Ingestion control",
     symbol: "△",
-    enabled: false,
   },
 ];
 
@@ -74,9 +71,7 @@ export function SidebarNav() {
             "group flex items-center justify-between rounded-[22px] px-4 py-3 transition",
             active
               ? "surface-tier-2 border border-[var(--border-ghost-strong)] text-[var(--text-primary)] shadow-[0_12px_30px_rgba(6,10,18,0.16)]"
-              : item.enabled
-                ? "border border-transparent text-[var(--text-secondary)] hover:border-[var(--border-ghost)] hover:bg-white/4 hover:text-[var(--text-primary)]"
-                : "border border-transparent text-[var(--text-tertiary)] opacity-70",
+              : "border border-transparent text-[var(--text-secondary)] hover:border-[var(--border-ghost)] hover:bg-white/4 hover:text-[var(--text-primary)]",
           ].join(" ");
           const content = (
             <>
@@ -86,9 +81,7 @@ export function SidebarNav() {
                 </span>
                 <div>
                   <p className="text-sm font-medium">{item.label}</p>
-                  <p className="text-xs text-[var(--text-tertiary)]">
-                    {item.enabled ? item.hint : "Coming soon"}
-                  </p>
+                  <p className="text-xs text-[var(--text-tertiary)]">{item.hint}</p>
                 </div>
               </div>
               {active ? (
@@ -96,14 +89,6 @@ export function SidebarNav() {
               ) : null}
             </>
           );
-
-          if (!item.enabled) {
-            return (
-              <div key={item.href} aria-disabled="true" className={className}>
-                {content}
-              </div>
-            );
-          }
 
           return (
             <Link
@@ -126,7 +111,7 @@ export function SidebarNav() {
           <SeverityBadge tone="medium">Hybrid demo</SeverityBadge>
         </div>
         <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">
-          Live Dashboard and Impact Analysis stay event-driven while Readiness and Pipeline remain demo-backed until later tasks land.
+          All four routes now share the Observer shell so later screen work can land on stable scaffolding.
         </p>
       </div>
     </div>

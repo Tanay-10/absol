@@ -12,46 +12,18 @@ import { useDashboard } from "@/hooks/useDashboard";
 import { useEvents } from "@/hooks/useEvents";
 import { useAlerts } from "@/hooks/useAlerts";
 import { useEventDetail } from "@/hooks/useEventDetail";
-import { api } from "@/lib/api";
 
 export default function DashboardPage() {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const [running, setRunning] = useState(false);
-  const [status, setStatus] = useState<string | null>(null);
 
-  const { summary, loading: summaryLoading, refresh: refreshSummary } = useDashboard();
-  const { events, loading: eventsLoading, refresh: refreshEvents } = useEvents();
-  const { alerts, loading: alertsLoading, refresh: refreshAlerts } = useAlerts();
+  const { summary, loading: summaryLoading } = useDashboard();
+  const { events, loading: eventsLoading } = useEvents();
+  const { alerts, loading: alertsLoading } = useAlerts();
   const { detail, loading: detailLoading } = useEventDetail(selectedEventId);
-
-  const handlePipelineComplete = useCallback(() => {
-    refreshSummary();
-    refreshEvents();
-    refreshAlerts();
-  }, [refreshSummary, refreshEvents, refreshAlerts]);
 
   const handleEventSelect = useCallback((eventId: string) => {
     setSelectedEventId((prev) => (prev === eventId ? null : eventId));
   }, []);
-
-  const runPipeline = useCallback(async () => {
-    setRunning(true);
-    setStatus("Running live ingestion and scoring...");
-    try {
-      const result = await api.runPipeline();
-      setStatus(
-        `Pipeline complete — ${result.events_found} sourced, ${result.events_processed} promoted`
-      );
-      handlePipelineComplete();
-    } catch (err) {
-      setStatus(
-        `Pipeline failed — ${err instanceof Error ? err.message : "Unknown error"}`
-      );
-    } finally {
-      setRunning(false);
-      setTimeout(() => setStatus(null), 8000);
-    }
-  }, [handlePipelineComplete]);
 
   const handleCloseDetail = useCallback(() => {
     setSelectedEventId(null);
@@ -67,29 +39,19 @@ export default function DashboardPage() {
           </>
         }
         actions={
-          <div className="flex flex-col items-stretch gap-3 sm:items-end">
-            <div className="flex flex-wrap justify-end gap-3">
-              {selectedEventId && (
-                <button
-                  type="button"
-                  onClick={handleCloseDetail}
-                  className="ghost-border rounded-full px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--border-ghost-strong)] hover:text-[var(--text-primary)]"
-                >
-                  Clear focus
-                </button>
-              )}
+          <div className="flex flex-wrap justify-end gap-3">
+            {selectedEventId && (
               <button
                 type="button"
-                onClick={runPipeline}
-                disabled={running}
-                className="metallic-cta rounded-full px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={handleCloseDetail}
+                className="ghost-border rounded-full px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--border-ghost-strong)] hover:text-[var(--text-primary)]"
               >
-                {running ? "Running pipeline..." : "Run pipeline"}
+                Clear focus
               </button>
-            </div>
-            {status && (
-              <p className="text-sm text-[var(--text-secondary)]">{status}</p>
             )}
+            <div className="surface-tier-1 ghost-border rounded-full px-4 py-2 text-sm text-[var(--text-secondary)]">
+              Shared shell scaffolding active
+            </div>
           </div>
         }
       />
