@@ -46,9 +46,9 @@ export function SidebarNav() {
             <p className="text-xs uppercase tracking-[0.24em] text-[var(--text-tertiary)]">
               InsureShield
             </p>
-            <h1 className="text-lg font-semibold text-[var(--text-primary)]">
+            <p className="text-lg font-semibold text-[var(--text-primary)]">
               Sovereign Observer
-            </h1>
+            </p>
           </div>
         </div>
 
@@ -65,7 +65,7 @@ export function SidebarNav() {
         </div>
       </div>
 
-      <nav className="flex-1 space-y-2">
+      <nav aria-label="Primary navigation" className="flex-1 space-y-2">
         {NAV_ITEMS.map((item) => {
           const active = isActive(pathname, item.href);
           const className = [
