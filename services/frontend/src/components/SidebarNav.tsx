@@ -7,16 +7,19 @@ import { SeverityBadge } from "@/components/SeverityBadge";
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", hint: "Live signals", symbol: "◉" },
   {
+    href: "/impact",
     label: "Impact Analysis",
     hint: "Exposure framing",
     symbol: "◎",
   },
   {
+    href: "/readiness",
     label: "Readiness",
     hint: "Hybrid rehearsal",
     symbol: "◌",
   },
   {
+    href: "/pipeline",
     label: "Pipeline",
     hint: "Ingestion control",
     symbol: "△",
@@ -86,10 +89,6 @@ export function SidebarNav() {
               </div>
               {active ? (
                 <span className="h-2.5 w-2.5 rounded-full bg-[var(--accent-gold)]" />
-              ) : !item.href ? (
-                <span className="rounded-full border border-[var(--border-ghost)] px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
-                  Planned
-                </span>
               ) : null}
             </>
           );
