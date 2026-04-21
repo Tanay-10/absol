@@ -1,38 +1,63 @@
 "use client";
 
-import type { DashboardSummary } from "@/lib/types";
+import type { Alert, DashboardSummary } from "@/lib/types";
+import { SeverityBadge } from "@/components/SeverityBadge";
+import { formatCompactAmount, getAlertBreakdown } from "@/lib/dashboard";
 
 interface StatsCardsProps {
   summary: DashboardSummary | null;
+  alerts: Alert[];
+  eventsCount: number;
   loading: boolean;
 }
 
 function StatCard({
+  tone,
   label,
   value,
-  color = "text-[var(--text-primary)]",
   subtext,
 }: {
+  tone: "neutral" | "medium" | "critical";
   label: string;
   value: string | number;
-  color?: string;
   subtext?: string;
 }) {
+  const toneClasses = {
+    neutral:
+      "bg-[linear-gradient(180deg,rgba(143,214,255,0.16),rgba(143,214,255,0.04))] text-[var(--accent-cyan)]",
+    medium:
+      "bg-[linear-gradient(180deg,rgba(242,207,141,0.18),rgba(242,207,141,0.04))] text-[var(--accent-amber)]",
+    critical:
+      "bg-[linear-gradient(180deg,rgba(201,178,255,0.2),rgba(201,178,255,0.05))] text-[var(--accent-violet)]",
+  } as const;
+
   return (
-    <div className="surface-tier-2 ghost-border flex flex-col rounded-[24px] p-4">
-      <span className="text-xs uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
-        {label}
+    <div className="rounded-[26px] border border-white/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-xs uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+          {label}
+        </span>
+        <SeverityBadge tone={tone}>{tone === "neutral" ? "Blue" : tone === "medium" ? "Amber" : "Critical"}</SeverityBadge>
+      </div>
+      <span className={`mt-4 inline-flex rounded-2xl px-3 py-2 text-3xl font-semibold ${toneClasses[tone]}`}>
+        {value}
       </span>
-      <span className={`text-2xl font-bold mt-1 ${color}`}>{value}</span>
       {subtext && (
-        <span className="mt-1 text-xs text-[var(--text-tertiary)]">{subtext}</span>
+        <span className="mt-3 block text-sm leading-6 text-[var(--text-secondary)]">
+          {subtext}
+        </span>
       )}
     </div>
   );
 }
 
-export function StatsCards({ summary, loading }: StatsCardsProps) {
-  if (loading || !summary) {
+export function StatsCards({
+  summary,
+  alerts,
+  eventsCount,
+  loading,
+}: StatsCardsProps) {
+  if (loading && !summary && alerts.length === 0) {
     return (
       <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
@@ -45,41 +70,46 @@ export function StatsCards({ summary, loading }: StatsCardsProps) {
     );
   }
 
-  const formatAmount = (n: number) => {
-    if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
-    if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`;
-    return `$${n.toFixed(0)}`;
-  };
+  const breakdown = getAlertBreakdown(summary, alerts);
+  const amberCount = breakdown.medium + breakdown.high;
+  const totalAlerts = summary?.total_alerts ?? alerts.length;
+  const activeAlerts = summary?.active_alerts ?? breakdown.high + breakdown.critical;
+  const exposureAmount =
+    summary?.estimated_total_amount ??
+    alerts.reduce((sum, alert) => sum + alert.estimated_total_amount, 0);
+  const totalMatches =
+    summary?.total_matches ??
+    alerts.reduce((sum, alert) => sum + alert.total_policies_affected, 0);
 
   return (
     <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4">
       <StatCard
-        label="Active Events"
-        value={summary.total_events}
-        color="text-[var(--accent-cyan)]"
-        subtext="Observed across the current watch window"
-      />
-      <StatCard
-        label="Active Alerts"
-        value={summary.active_alerts}
-        color={
-          summary.active_alerts > 0
-            ? "text-[var(--accent-coral)]"
-            : "text-[var(--accent-emerald)]"
+        tone="critical"
+        label="Critical response"
+        value={breakdown.critical}
+        subtext={
+          breakdown.critical > 0
+            ? "Immediate executive response lanes are active."
+            : "No incidents are in critical response."
         }
-        subtext={`${summary.total_alerts} total`}
       />
       <StatCard
-        label="Policies Exposed"
-        value={summary.total_matches}
-        color="text-[var(--accent-amber)]"
-        subtext={`of ${summary.total_policies} total`}
+        tone="medium"
+        label="Amber watch"
+        value={amberCount}
+        subtext={`${activeAlerts} active escalation lane${activeAlerts === 1 ? "" : "s"} under watch.`}
       />
       <StatCard
-        label="Est. Claims"
-        value={formatAmount(summary.estimated_total_amount)}
-        color="text-[var(--accent-gold)]"
-        subtext={`${summary.estimated_claims} claims`}
+        tone="neutral"
+        label="Blue watch"
+        value={breakdown.low}
+        subtext={`${totalAlerts} classified alert${totalAlerts === 1 ? "" : "s"} currently in the ledger.`}
+      />
+      <StatCard
+        tone={eventsCount > 0 ? "neutral" : "medium"}
+        label="Live theater"
+        value={summary?.total_events ?? eventsCount}
+        subtext={`${totalMatches} matched policies · ${formatCompactAmount(exposureAmount)} estimated exposure.`}
       />
     </div>
   );
