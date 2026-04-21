@@ -7,26 +7,24 @@ import { SeverityBadge } from "@/components/SeverityBadge";
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", hint: "Live signals", symbol: "◉" },
   {
-    href: "/impact",
     label: "Impact Analysis",
     hint: "Exposure framing",
     symbol: "◎",
   },
   {
-    href: "/readiness",
     label: "Readiness",
     hint: "Hybrid rehearsal",
     symbol: "◌",
   },
   {
-    href: "/pipeline",
     label: "Pipeline",
     hint: "Ingestion control",
     symbol: "△",
   },
 ];
 
-function isActive(pathname: string, href: string) {
+function isActive(pathname: string, href?: string) {
+  if (!href) return false;
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
@@ -71,7 +69,9 @@ export function SidebarNav() {
             "group flex items-center justify-between rounded-[22px] px-4 py-3 transition",
             active
               ? "surface-tier-2 border border-[var(--border-ghost-strong)] text-[var(--text-primary)] shadow-[0_12px_30px_rgba(6,10,18,0.16)]"
-              : "border border-transparent text-[var(--text-secondary)] hover:border-[var(--border-ghost)] hover:bg-white/4 hover:text-[var(--text-primary)]",
+              : item.href
+                ? "border border-transparent text-[var(--text-secondary)] hover:border-[var(--border-ghost)] hover:bg-white/4 hover:text-[var(--text-primary)]"
+                : "border border-transparent text-[var(--text-secondary)] opacity-80",
           ].join(" ");
           const content = (
             <>
@@ -86,9 +86,21 @@ export function SidebarNav() {
               </div>
               {active ? (
                 <span className="h-2.5 w-2.5 rounded-full bg-[var(--accent-gold)]" />
+              ) : !item.href ? (
+                <span className="rounded-full border border-[var(--border-ghost)] px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
+                  Planned
+                </span>
               ) : null}
             </>
           );
+
+          if (!item.href) {
+            return (
+              <div key={item.label} className={className} aria-disabled="true">
+                {content}
+              </div>
+            );
+          }
 
           return (
             <Link
@@ -111,7 +123,7 @@ export function SidebarNav() {
           <SeverityBadge tone="medium">Hybrid demo</SeverityBadge>
         </div>
         <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">
-          All four routes now share the Observer shell so later screen work can land on stable scaffolding.
+          The Observer shell is staged for all four screens, with dashboard live and the remaining destinations reserved for later tasks.
         </p>
       </div>
     </div>
