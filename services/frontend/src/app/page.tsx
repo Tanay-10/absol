@@ -8,7 +8,6 @@ import { EventDetail } from "@/components/EventDetail";
 import { PageHeader } from "@/components/PageHeader";
 import { PriorityIncidents } from "@/components/PriorityIncidents";
 import { SeverityBadge } from "@/components/SeverityBadge";
-import { SurfaceCard } from "@/components/SurfaceCard";
 import { StatsCards } from "@/components/StatsCards";
 import { EventMap } from "@/components/EventMap";
 import {
@@ -24,7 +23,7 @@ import { useEvents } from "@/hooks/useEvents";
 import { useAlerts } from "@/hooks/useAlerts";
 import { useEventDetail } from "@/hooks/useEventDetail";
 import { usePipelineRun } from "@/hooks/usePipelineRun";
-
+import { SurfaceCard } from "@/components/SurfaceCard";
 export default function DashboardPage() {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
@@ -63,9 +62,12 @@ export default function DashboardPage() {
     [alerts, events]
   );
 
-  const handleEventSelect = useCallback((eventId: string) => {
-    setSelectedEventId((prev) => (prev === eventId ? null : eventId));
-  }, []);
+  const handleEventSelect = useCallback(
+    (eventId: string) => {
+      setSelectedEventId((prev) => (prev === eventId ? null : eventId));
+    },
+    []
+  );
 
   const handleCloseDetail = useCallback(() => {
     setSelectedEventId(null);
@@ -131,7 +133,7 @@ export default function DashboardPage() {
         }
         actions={
           <div className="flex flex-wrap justify-end gap-3">
-            {pipelineStatus && (
+            {pipelineStatus ? (
               <SeverityBadge tone={pipelineStatus.tone}>
                 {pipelineStatus.message}
               </SeverityBadge>
@@ -150,9 +152,9 @@ export default function DashboardPage() {
                 onClick={handleCloseDetail}
                 className="ghost-border rounded-full px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--border-ghost-strong)] hover:text-[var(--text-primary)]"
               >
-                Clear focus
-              </button>
-            )}
+                  Clear focus
+                </button>
+              )}
             <button
               type="button"
               onClick={() => void run()}
@@ -291,7 +293,7 @@ export default function DashboardPage() {
                 </h2>
               </div>
               <SeverityBadge tone={selectedEventId ? "medium" : "neutral"}>
-                {selectedEventId ? "Focused event" : "Global sweep"}
+                {selectedEventId ? "Impact route armed" : "Global sweep"}
               </SeverityBadge>
             </div>
             <div className="min-h-0 flex-1">
@@ -301,7 +303,7 @@ export default function DashboardPage() {
                 <EventMap
                   events={events}
                   selectedEventId={selectedEventId}
-                  impactZone={detail?.impact_zone || null}
+                  impactZone={null}
                   onEventSelect={handleEventSelect}
                 />
               )}

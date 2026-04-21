@@ -148,11 +148,11 @@ export function AlertFeed({
               <Link
                 href={`/impact?eventId=${alert.event_id}`}
                 className="rounded-full border border-white/8 px-3 py-1.5 text-sm font-medium text-[var(--text-secondary)] transition hover:border-white/16 hover:text-[var(--text-primary)]"
-              >
-                Open impact
-              </Link>
-            </div>
-          </article>
+                >
+                  Open impact
+                </Link>
+              </div>
+            </article>
         );
       })}
     </div>
