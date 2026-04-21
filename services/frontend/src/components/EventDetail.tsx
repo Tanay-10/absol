@@ -22,6 +22,7 @@ const ALERT_BADGE_TONE = {
 interface EventDetailProps {
   detail: EventDetailType | null;
   loading: boolean;
+  onClose?: () => void;
 }
 
 function buildPath(points: number[]) {
@@ -31,7 +32,7 @@ function buildPath(points: number[]) {
     .join(" ");
 }
 
-export function EventDetail({ detail, loading }: EventDetailProps) {
+export function EventDetail({ detail, loading, onClose }: EventDetailProps) {
   if (!detail && !loading) return null;
 
   if (loading) {
@@ -73,13 +74,22 @@ export function EventDetail({ detail, loading }: EventDetailProps) {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <SeverityBadge tone={alert?.alert_level || "neutral"}>
             {alert ? `${alert.alert_level} alert` : "No active alert"}
           </SeverityBadge>
           <SeverityBadge tone="medium">
             {impact_zone?.country_code || event.region_name || "Global"}
           </SeverityBadge>
+          {onClose ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="ghost-border rounded-full px-3 py-1 text-xs font-medium text-[var(--text-secondary)] transition hover:border-[var(--border-ghost-strong)] hover:text-[var(--text-primary)]"
+            >
+              Close
+            </button>
+          ) : null}
         </div>
       </div>
 

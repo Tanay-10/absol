@@ -39,9 +39,13 @@ export function CommandProtocolPanel({
   latestUpdateAt,
   selectedEvent,
 }: CommandProtocolPanelProps) {
-  const leadAlert =
-    selectedEvent && alerts.find((alert) => alert.event_id === selectedEvent.id)
+  const selectedAlert =
+    selectedEvent != null
       ? alerts.find((alert) => alert.event_id === selectedEvent.id) || null
+      : null;
+  const leadAlert =
+    selectedEvent != null
+      ? selectedAlert
       : [...alerts].sort(
             (left, right) =>
               ALERT_PRIORITY[right.alert_level] - ALERT_PRIORITY[left.alert_level]

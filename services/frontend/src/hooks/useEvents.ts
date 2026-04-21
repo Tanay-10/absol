@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { DashboardEvent } from "@/lib/types";
 
-export function useEvents() {
+export function useEvents(refreshInterval = 30000) {
   const [events, setEvents] = useState<DashboardEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -22,8 +22,12 @@ export function useEvents() {
     const initialLoad = setTimeout(() => {
       void refresh();
     }, 0);
-    return () => clearTimeout(initialLoad);
-  }, [refresh]);
+    const intervalId = setInterval(refresh, refreshInterval);
+    return () => {
+      clearTimeout(initialLoad);
+      clearInterval(intervalId);
+    };
+  }, [refresh, refreshInterval]);
 
   return { events, loading, refresh };
 }

@@ -137,7 +137,7 @@ export default function DashboardPage() {
               <SeverityBadge tone={pipelineStatus.tone}>
                 {pipelineStatus.message}
               </SeverityBadge>
-            )}
+            ) : null}
             {selectedEventId && (
               <Link
                 href={`/impact?eventId=${selectedEventId}`}
@@ -152,9 +152,9 @@ export default function DashboardPage() {
                 onClick={handleCloseDetail}
                 className="ghost-border rounded-full px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--border-ghost-strong)] hover:text-[var(--text-primary)]"
               >
-                  Clear focus
-                </button>
-              )}
+                Clear focus
+              </button>
+            )}
             <button
               type="button"
               onClick={() => void run()}
