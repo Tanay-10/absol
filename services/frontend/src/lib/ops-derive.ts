@@ -53,11 +53,7 @@ function matchesZone(
     zone.countryCodes.length === 0 ||
     zone.countryCodes.some((code) => countryCodes.includes(code.toLowerCase()));
 
-  if (zone.regionKeywords.length > 0) {
-    return familyMatch && regionMatch;
-  }
-
-  return familyMatch && countryMatch;
+  return familyMatch && regionMatch && countryMatch;
 }
 
 function alertWeight(level: Alert["alert_level"] | "none") {
@@ -116,9 +112,11 @@ function buildSourceHealthRows({
 
   return Array.from(grouped.entries())
     .map(([source, sourceEvents]) => {
-      const sortedEvents = [...sourceEvents].sort((left, right) =>
-        right.detected_at.localeCompare(left.detected_at)
-      );
+      const sortedEvents = [...sourceEvents].sort((left, right) => {
+        const rightDate = right.detected_at ?? "";
+        const leftDate = left.detected_at ?? "";
+        return rightDate.localeCompare(leftDate);
+      });
       const lastDetectedAt = sortedEvents[0]?.detected_at ?? null;
       const sourceEventIds = new Set(sourceEvents.map((event) => event.id));
       const minutesSinceLastEvent = minutesBetween(lastDetectedAt, now);
@@ -169,7 +167,7 @@ function buildZoneRows({
       0
     );
     const reserveCapacity = staffedPools.reduce(
-      (total, pool) => total + Math.round(pool.reserveAgents * 2),
+      (total, pool) => total + pool.reserveAgents,
       0
     );
     const estimatedClaims = zoneAlerts.reduce(
@@ -209,11 +207,16 @@ function buildZoneRows({
 function buildStaffingRows({
   alerts,
   config,
+  events,
 }: OpsInputs): StaffingPoolView[] {
+  const eventById = new Map(events.map((event) => [event.id, event]));
+
   return config.staffingPools
     .map((pool) => {
       const matchingAlerts = alerts.filter((alert) => {
-        const family = toLower(alert.events?.event_family || alert.events?.event_type);
+        const event = eventById.get(alert.event_id);
+        if (!event) return false;
+        const family = normalizeFamily(event);
         return pool.supportedEventFamilies.length === 0 || pool.supportedEventFamilies.includes(family);
       });
       const allocatedLoad =
@@ -292,15 +295,12 @@ function buildDestinationRows({
         .filter((alert) => matchedEventIdSet.has(alert.event_id))
         .map((alert) => alert.id);
       const totalWork = matchedEventIds.length + matchedAlertIds.length;
-      const tone: OpsHealthTone = destination.enabled
-        ? totalWork === 0
-          ? "healthy"
-          : totalWork >= 6
-            ? "critical"
-            : totalWork >= 3
-              ? "watch"
-              : "healthy"
-        : "critical";
+      const workPressure = destination.enabled && totalWork > 0
+        ? totalWork / Math.max(1, config.thresholds.maxAlertLoadPerCoordinator)
+        : 0;
+      const tone: OpsHealthTone = !destination.enabled
+        ? "critical"
+        : toneFromRatio(workPressure);
 
       return {
         id: destination.id,
@@ -343,7 +343,7 @@ function buildSnapshot({
     summary?.estimated_claims ??
     alerts.reduce((total, alert) => total + alert.estimated_claim_count, 0);
   const activeAlerts = summary?.active_alerts ?? alerts.length;
-  const activeEvents = summary?.total_events ?? zones.reduce((total, zone) => total + zone.activeEvents, 0);
+  const activeEvents = summary?.total_events ?? new Set(zones.flatMap((zone) => zone.eventIds)).size;
   const loadPressure =
     totalCapacity === 0
       ? activeAlerts > 0 || estimatedClaims > 0
@@ -468,7 +468,7 @@ function buildPipelineEventRows({
 export function createReadinessViewModel(inputs: OpsInputs): ReadinessViewModel {
   const now = inputs.now ?? new Date();
   const zones = buildZoneRows(inputs);
-  const staffingPools = buildStaffingRows(inputs);
+  const staffingPools = buildStaffingRows({ ...inputs, events: inputs.events });
   const sourceHealth = buildSourceHealthRows({ ...inputs, now });
   const routingDestinations = buildDestinationRows(inputs);
   const snapshot = buildSnapshot({

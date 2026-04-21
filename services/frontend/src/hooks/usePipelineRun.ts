@@ -33,7 +33,7 @@ export function usePipelineRun(afterRun?: () => Promise<unknown> | void) {
         tone: "high",
         message: `Pipeline failed: ${message}`,
       });
-      throw error;
+      return undefined;
     } finally {
       setRunning(false);
     }
