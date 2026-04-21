@@ -19,9 +19,14 @@ export function useDashboard(refreshInterval = 30000) {
   }, []);
 
   useEffect(() => {
-    refresh();
+    const initialLoad = setTimeout(() => {
+      void refresh();
+    }, 0);
     const id = setInterval(refresh, refreshInterval);
-    return () => clearInterval(id);
+    return () => {
+      clearTimeout(initialLoad);
+      clearInterval(id);
+    };
   }, [refresh, refreshInterval]);
 
   return { summary, loading, refresh };

@@ -24,7 +24,10 @@ export function useEventDetail(eventId: string | null) {
   }, [eventId]);
 
   useEffect(() => {
-    refresh();
+    const initialLoad = setTimeout(() => {
+      void refresh();
+    }, 0);
+    return () => clearTimeout(initialLoad);
   }, [refresh]);
 
   return { detail, loading, refresh };

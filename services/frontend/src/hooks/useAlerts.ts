@@ -22,9 +22,12 @@ export function useAlerts() {
   }, []);
 
   useEffect(() => {
-    refresh();
+    const initialLoad = setTimeout(() => {
+      void refresh();
+    }, 0);
     timerRef.current = setInterval(refresh, POLL_INTERVAL_MS);
     return () => {
+      clearTimeout(initialLoad);
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [refresh]);

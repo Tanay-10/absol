@@ -74,12 +74,15 @@ export function MapEventMarker({
         eventHandlers={{ click: onClick }}
       >
         <Popup>
-          <div className="text-sm">
-            <strong>{event.title}</strong>
-            <br />
-            <span>Type: {event.event_type}</span>
-            <br />
-            <span>Severity: {event.severity_label} ({event.severity_score})</span>
+          <div className="map-popup">
+            <p className="map-popup-eyebrow">{event.event_type}</p>
+            <h4 className="map-popup-title">{event.title}</h4>
+            <div className="map-popup-meta">
+              <span>{event.region_name || event.source}</span>
+              <span>
+                Severity {event.severity_label} · {event.severity_score}
+              </span>
+            </div>
           </div>
         </Popup>
       </Marker>

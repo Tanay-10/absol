@@ -36,7 +36,7 @@ export function EventMap({
   );
 
   return (
-    <div className="w-full h-full rounded-xl overflow-hidden border border-slate-700">
+    <div className="ghost-border h-full w-full overflow-hidden rounded-[24px] bg-[rgba(7,11,20,0.45)]">
       <MapContainer
         center={[20, 0]}
         zoom={2}

@@ -19,7 +19,10 @@ export function useEvents() {
   }, []);
 
   useEffect(() => {
-    refresh();
+    const initialLoad = setTimeout(() => {
+      void refresh();
+    }, 0);
+    return () => clearTimeout(initialLoad);
   }, [refresh]);
 
   return { events, loading, refresh };

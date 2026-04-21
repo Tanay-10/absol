@@ -10,7 +10,7 @@ interface StatsCardsProps {
 function StatCard({
   label,
   value,
-  color = "text-slate-50",
+  color = "text-[var(--text-primary)]",
   subtext,
 }: {
   label: string;
@@ -19,10 +19,14 @@ function StatCard({
   subtext?: string;
 }) {
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-col">
-      <span className="text-xs text-slate-400 uppercase tracking-wider">{label}</span>
+    <div className="surface-tier-2 ghost-border flex flex-col rounded-[24px] p-4">
+      <span className="text-xs uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+        {label}
+      </span>
       <span className={`text-2xl font-bold mt-1 ${color}`}>{value}</span>
-      {subtext && <span className="text-xs text-slate-500 mt-1">{subtext}</span>}
+      {subtext && (
+        <span className="mt-1 text-xs text-[var(--text-tertiary)]">{subtext}</span>
+      )}
     </div>
   );
 }
@@ -30,9 +34,12 @@ function StatCard({
 export function StatsCards({ summary, loading }: StatsCardsProps) {
   if (loading || !summary) {
     return (
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="bg-slate-800 border border-slate-700 rounded-xl p-4 h-24 animate-pulse" />
+          <div
+            key={i}
+            className="ghost-border h-24 animate-pulse rounded-[24px] bg-white/6 p-4"
+          />
         ))}
       </div>
     );
@@ -45,28 +52,33 @@ export function StatsCards({ summary, loading }: StatsCardsProps) {
   };
 
   return (
-    <div className="grid grid-cols-4 gap-3">
+    <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4">
       <StatCard
         label="Active Events"
         value={summary.total_events}
-        color="text-blue-400"
+        color="text-[var(--accent-cyan)]"
+        subtext="Observed across the current watch window"
       />
       <StatCard
         label="Active Alerts"
         value={summary.active_alerts}
-        color={summary.active_alerts > 0 ? "text-red-400" : "text-green-400"}
+        color={
+          summary.active_alerts > 0
+            ? "text-[var(--accent-coral)]"
+            : "text-[var(--accent-emerald)]"
+        }
         subtext={`${summary.total_alerts} total`}
       />
       <StatCard
         label="Policies Exposed"
         value={summary.total_matches}
-        color="text-orange-400"
+        color="text-[var(--accent-amber)]"
         subtext={`of ${summary.total_policies} total`}
       />
       <StatCard
         label="Est. Claims"
         value={formatAmount(summary.estimated_total_amount)}
-        color="text-yellow-400"
+        color="text-[var(--accent-gold)]"
         subtext={`${summary.estimated_claims} claims`}
       />
     </div>
