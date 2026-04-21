@@ -6,6 +6,9 @@ export default function PipelinePage() {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6">
       <PageHeader
+        eyebrow="Pipeline"
+        title="Ingestion oversight"
+        description="Placeholder route for future extraction controls while the live dashboard keeps the current trigger flow."
         meta={
           <>
             <SeverityBadge tone="medium">Task 1 scaffold</SeverityBadge>

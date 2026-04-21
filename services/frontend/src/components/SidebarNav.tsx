@@ -122,7 +122,7 @@ export function SidebarNav() {
           <SeverityBadge tone="medium">Hybrid demo</SeverityBadge>
         </div>
         <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">
-          The Observer shell is staged for all four screens, with dashboard live and the remaining destinations reserved for later tasks.
+          Follow live signals, move between analysis workspaces, and keep operators in one consistent command surface.
         </p>
       </div>
     </div>

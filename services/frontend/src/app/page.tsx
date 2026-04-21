@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { SeverityBadge } from "@/components/SeverityBadge";
 import { SurfaceCard } from "@/components/SurfaceCard";
@@ -12,13 +12,19 @@ import { useDashboard } from "@/hooks/useDashboard";
 import { useEvents } from "@/hooks/useEvents";
 import { useAlerts } from "@/hooks/useAlerts";
 import { useEventDetail } from "@/hooks/useEventDetail";
+import { api } from "@/lib/api";
 
 export default function DashboardPage() {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [pipelineRunning, setPipelineRunning] = useState(false);
+  const [pipelineStatus, setPipelineStatus] = useState<{
+    tone: "low" | "medium" | "high";
+    message: string;
+  } | null>(null);
 
-  const { summary, loading: summaryLoading } = useDashboard();
-  const { events, loading: eventsLoading } = useEvents();
-  const { alerts, loading: alertsLoading } = useAlerts();
+  const { summary, loading: summaryLoading, refresh: refreshSummary } = useDashboard();
+  const { events, loading: eventsLoading, refresh: refreshEvents } = useEvents();
+  const { alerts, loading: alertsLoading, refresh: refreshAlerts } = useAlerts();
   const { detail, loading: detailLoading } = useEventDetail(selectedEventId);
 
   const handleEventSelect = useCallback((eventId: string) => {
@@ -29,9 +35,40 @@ export default function DashboardPage() {
     setSelectedEventId(null);
   }, []);
 
+  const handlePipelineRun = useCallback(async () => {
+    setPipelineRunning(true);
+    setPipelineStatus({ tone: "medium", message: "Running pipeline..." });
+
+    try {
+      const result = await api.runPipeline();
+      await Promise.allSettled([refreshSummary(), refreshEvents(), refreshAlerts()]);
+      setPipelineStatus({
+        tone: "low",
+        message: `${result.events_found} events found, ${result.events_processed} processed`,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown pipeline error";
+      setPipelineStatus({
+        tone: "high",
+        message: `Pipeline failed: ${message}`,
+      });
+    } finally {
+      setPipelineRunning(false);
+    }
+  }, [refreshAlerts, refreshEvents, refreshSummary]);
+
+  const pipelineButtonLabel = useMemo(
+    () => (pipelineRunning ? "Running pipeline..." : "Run pipeline"),
+    [pipelineRunning]
+  );
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6">
       <PageHeader
+        eyebrow="Command deck"
+        title="Sovereign Observer"
+        description="Track live catastrophe movement, interpret portfolio exposure, and coordinate response from one operational frame."
         meta={
           <>
             <SeverityBadge tone="neutral">Live dashboard</SeverityBadge>
@@ -40,6 +77,11 @@ export default function DashboardPage() {
         }
         actions={
           <div className="flex flex-wrap justify-end gap-3">
+            {pipelineStatus && (
+              <SeverityBadge tone={pipelineStatus.tone}>
+                {pipelineStatus.message}
+              </SeverityBadge>
+            )}
             {selectedEventId && (
               <button
                 type="button"
@@ -49,9 +91,14 @@ export default function DashboardPage() {
                 Clear focus
               </button>
             )}
-            <div className="surface-tier-1 ghost-border rounded-full px-4 py-2 text-sm text-[var(--text-secondary)]">
-              Shared shell scaffolding active
-            </div>
+            <button
+              type="button"
+              onClick={() => void handlePipelineRun()}
+              disabled={pipelineRunning}
+              className="rounded-full bg-[linear-gradient(135deg,rgba(245,235,215,0.95),rgba(183,152,102,0.92))] px-4 py-2 text-sm font-semibold text-[var(--ink-inverse)] shadow-[0_16px_36px_rgba(151,121,74,0.24)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {pipelineButtonLabel}
+            </button>
           </div>
         }
       />
