@@ -2,8 +2,6 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
-import { SeverityBadge } from "@/components/SeverityBadge";
-import { SurfaceCard } from "@/components/SurfaceCard";
 import { useReadinessModel } from "@/hooks/useReadinessModel";
 
 export default function ReadinessPage() {
@@ -64,353 +62,225 @@ export default function ReadinessPage() {
     }));
   }, [model]);
 
-  const postureBadge = model.snapshot.posture === "critical"
-    ? <SeverityBadge tone="critical">Critical posture</SeverityBadge>
-    : model.snapshot.posture === "strained"
-    ? <SeverityBadge tone="high">Strained posture</SeverityBadge>
-    : <SeverityBadge tone="low">Ready posture</SeverityBadge>;
+  const tone = model.snapshot.posture === "critical" ? 'critical' : model.snapshot.posture === 'strained' ? 'medium' : 'neutral';
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-6">
-      <PageHeader
-        eyebrow="Operational readiness"
-        title="System saturation"
-        description="Hybrid model combining live surge pressure from alerts and events with local staffing and capacity assumptions."
-        meta={
-          <>
-            {postureBadge}
-            <SeverityBadge tone="neutral">Hybrid data</SeverityBadge>
-          </>
-        }
-        actions={
+    <div className="flex flex-col gap-10 py-4">
+      {/* Header section */}
+      <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+        <div className="max-w-3xl">
+          <div className="flex items-center gap-3 mb-4">
+            <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${tone === 'critical' ? 'badge-critical' : tone === 'medium' ? 'badge-warning' : 'badge-stable'}`}>
+              {model.snapshot.posture} Posture
+            </span>
+            <span className="label-sm opacity-40">Operational Readiness</span>
+          </div>
+          <h1 className="display-lg text-on-background">
+            System Saturation
+          </h1>
+          <p className="mt-6 text-xl text-on-surface-variant opacity-70 leading-relaxed">
+            Hybrid model combining live surge pressure from alerts and events with local staffing and capacity assumptions.
+          </p>
+        </div>
+        <div className="flex gap-4">
           <button
             type="button"
             onClick={handleResetConfig}
-            className="ghost-border rounded-full px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--border-ghost-strong)] hover:text-[var(--text-primary)]"
+            className="rounded-xl bg-surface-high px-6 py-4 text-sm font-bold text-on-background transition-all hover:bg-surface-highest"
           >
-            Reset config
+            Reset Config
           </button>
-        }
-      />
+        </div>
+      </section>
 
       {model.loading ? (
-        <SurfaceCard tone="muted" className="flex flex-1 items-center justify-center p-6">
-          <p className="text-sm text-[var(--text-secondary)]">Loading readiness model...</p>
-        </SurfaceCard>
+        <div className="surface-card flex items-center justify-center p-20">
+          <p className="text-lg font-bold text-on-surface-variant opacity-40 animate-pulse">Loading Readiness Model...</p>
+        </div>
       ) : (
         <>
-          {/* Readiness headline */}
-          <SurfaceCard tone="muted" className="p-5">
-            <div className="mb-4 flex items-center justify-between gap-3">
+          {/* Readiness snapshot */}
+          <section className="surface-card p-8">
+            <div className="mb-8 flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
-                  System readiness
-                </p>
-                <h2 className="mt-1 text-base font-semibold text-[var(--text-primary)]">
-                  Operational snapshot
-                </h2>
+                <span className="label-sm text-on-surface-variant opacity-60">System Readiness</span>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight text-on-background">Operational Snapshot</h2>
               </div>
-              <SeverityBadge tone="neutral">Live calculation</SeverityBadge>
+              <span className="badge-stable rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">Live Calculation</span>
             </div>
-            <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-5">
-              <div className="surface-tier-2 ghost-border flex flex-col rounded-[24px] p-4">
-                <span className="text-xs uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
-                  Readiness score
-                </span>
-                <span className={`text-3xl font-bold mt-1 ${
-                  model.snapshot.posture === "critical" ? "text-[var(--accent-coral)]" :
-                  model.snapshot.posture === "strained" ? "text-[var(--accent-amber)]" :
-                  "text-[var(--accent-emerald)]"
-                }`}>
-                  {model.snapshot.score}
-                </span>
-                <span className="mt-1 text-xs text-[var(--text-tertiary)]">{model.snapshot.summary}</span>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-6">
+              <div className="rounded-2xl bg-surface-low p-6">
+                <p className="label-sm text-[10px] opacity-40 mb-3 text-center">Readiness Score</p>
+                <div className="flex flex-col items-center">
+                  <span className={`text-5xl font-bold ${
+                    model.snapshot.posture === "critical" ? "text-error" :
+                    model.snapshot.posture === "strained" ? "text-warning" :
+                    "text-on-background"
+                  }`}>
+                    {model.snapshot.score}
+                  </span>
+                  <span className="mt-2 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-40">{model.snapshot.summary}</span>
+                </div>
               </div>
-              <div className="surface-tier-2 ghost-border flex flex-col rounded-[24px] p-4">
-                <span className="text-xs uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
-                  Active alerts
-                </span>
-                <span className="text-2xl font-bold mt-1 text-[var(--accent-coral)]">
-                  {model.snapshot.activeAlerts}
-                </span>
-                <span className="mt-1 text-xs text-[var(--text-tertiary)]">
-                  {model.snapshot.activeEvents} events total
-                </span>
-              </div>
-              <div className="surface-tier-2 ghost-border flex flex-col rounded-[24px] p-4">
-                <span className="text-xs uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
-                  Est. claims
-                </span>
-                <span className="text-2xl font-bold mt-1 text-[var(--accent-amber)]">
-                  {model.snapshot.estimatedClaims}
-                </span>
-                <span className="mt-1 text-xs text-[var(--text-tertiary)]">
-                  {model.snapshot.impactedZones} zones impacted
-                </span>
-              </div>
-              <div className="surface-tier-2 ghost-border flex flex-col rounded-[24px] p-4">
-                <span className="text-xs uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
-                  Staffing util
-                </span>
-                <span className={`text-2xl font-bold mt-1 ${
-                  model.snapshot.staffingUtilization >= 1 ? "text-[var(--accent-coral)]" :
-                  model.snapshot.staffingUtilization >= 0.8 ? "text-[var(--accent-amber)]" :
-                  "text-[var(--accent-emerald)]"
-                }`}>
-                  {Math.round(model.snapshot.staffingUtilization * 100)}%
-                </span>
-                <span className="mt-1 text-xs text-[var(--text-tertiary)]">
-                  {model.snapshot.totalCapacity} capacity
-                </span>
-              </div>
-              <div className="surface-tier-2 ghost-border flex flex-col rounded-[24px] p-4">
-                <span className="text-xs uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
-                  Reserve pool
-                </span>
-                <span className="text-2xl font-bold mt-1 text-[var(--accent-cyan)]">
-                  {model.snapshot.reserveCapacity}
-                </span>
-                <span className="mt-1 text-xs text-[var(--text-tertiary)]">agents available</span>
-              </div>
-            </div>
-          </SurfaceCard>
 
-          {/* 72-hour arrivals chart (simplified demo) */}
-          <SurfaceCard tone="glass" className="p-5">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
-                  Inbound pressure
-                </p>
-                <h2 className="mt-1 text-base font-semibold text-[var(--text-primary)]">
-                  72-hour arrivals
-                </h2>
-              </div>
-              <SeverityBadge tone="neutral">Demo viz</SeverityBadge>
+              {[
+                { label: "Active Alerts", value: model.snapshot.activeAlerts, sub: `${model.snapshot.activeEvents} events total`, tone: 'critical' },
+                { label: "Est. Claims", value: model.snapshot.estimatedClaims, sub: `${model.snapshot.impactedZones} zones impacted`, tone: 'medium' },
+                { label: "Staffing Util", value: `${Math.round(model.snapshot.staffingUtilization * 100)}%`, sub: `${model.snapshot.totalCapacity} capacity`, tone: 'neutral' },
+                { label: "Reserve Pool", value: model.snapshot.reserveCapacity, sub: "agents available", tone: 'neutral' }
+              ].map((stat, i) => (
+                <div key={i} className="rounded-2xl bg-surface-low p-6">
+                  <p className="label-sm text-[10px] opacity-40 mb-3">{stat.label}</p>
+                  <p className="text-3xl font-bold text-on-background">{stat.value}</p>
+                  <p className="mt-2 text-[10px] text-on-surface-variant opacity-50">{stat.sub}</p>
+                </div>
+              ))}
             </div>
-            <div className="flex items-end gap-2 h-32">
+          </section>
+
+          {/* Pressure Chart */}
+          <section className="surface-card p-8">
+            <div className="mb-8 flex items-center justify-between">
+              <div>
+                <span className="label-sm text-on-surface-variant opacity-60">Inbound Pressure</span>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight text-on-background">72-Hour Arrivals</h2>
+              </div>
+              <span className="label-sm text-[10px] opacity-40">Predictive Capacity Model</span>
+            </div>
+            
+            <div className="flex items-end gap-1 h-48 bg-surface-low rounded-2xl p-6 px-12">
               {chartData.map((height, i) => {
                 const isHigh = height > 70;
                 return (
                   <div
                     key={i}
-                    className="flex-1 rounded-t transition-all hover:brightness-110"
-                    style={{
-                      height: `${height}%`,
-                      background: isHigh
-                        ? "linear-gradient(180deg, rgba(255,155,143,0.6), rgba(255,155,143,0.3))"
-                        : "linear-gradient(180deg, rgba(143,214,255,0.5), rgba(143,214,255,0.2))",
-                    }}
+                    className={`flex-1 rounded-t-sm transition-all duration-300 hover:brightness-75 cursor-help ${isHigh ? 'bg-primary' : 'bg-on-surface-variant opacity-20'}`}
+                    style={{ height: `${height}%` }}
                     title={`Hour ${i}: ${Math.round(height)}% pressure`}
                   />
                 );
               })}
             </div>
-            <div className="mt-3 flex justify-between text-xs text-[var(--text-tertiary)]">
-              <span>Now</span>
-              <span>24h</span>
-              <span>48h</span>
-              <span>72h</span>
+            <div className="mt-6 flex justify-between px-12 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-40">
+              <span>Current</span>
+              <span>24h Future</span>
+              <span>48h Future</span>
+              <span>72h Threshold</span>
             </div>
-          </SurfaceCard>
+          </section>
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Tactical reallocation cards */}
-            <SurfaceCard tone="muted" className="p-5">
-              <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
+            {/* Staffing Controls */}
+            <section className="surface-card p-8">
+              <div className="mb-8 flex items-center justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
-                    Staffing controls
-                  </p>
-                  <h2 className="mt-1 text-base font-semibold text-[var(--text-primary)]">
-                    Tactical reallocation
-                  </h2>
+                  <span className="label-sm text-on-surface-variant opacity-60">Staffing Controls</span>
+                  <h2 className="mt-2 text-2xl font-bold tracking-tight text-on-background">Tactical Reallocation</h2>
                 </div>
-                <SeverityBadge tone="neutral">Local only</SeverityBadge>
               </div>
-              <div className="space-y-3 max-h-[400px] overflow-y-auto">
+              
+              <div className="space-y-6">
                 {model.staffingPools.map(pool => (
-                  <div
-                    key={pool.id}
-                    className="surface-tier-2 ghost-border rounded-2xl p-4"
-                  >
-                    <div className="flex items-start justify-between gap-3 mb-3">
+                  <div key={pool.id} className="rounded-2xl bg-surface-low p-6 transition-all hover:bg-surface-low/80">
+                    <div className="flex justify-between items-start mb-4">
                       <div>
-                        <h3 className="font-semibold text-sm text-[var(--text-primary)]">
-                          {pool.name}
-                        </h3>
-                        <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
-                          {pool.team} · {pool.supportedEventFamilies.join(", ") || "All families"}
-                        </p>
+                        <h3 className="text-lg font-bold text-on-background">{pool.name}</h3>
+                        <p className="text-xs text-on-surface-variant opacity-50">{pool.team} · {pool.supportedEventFamilies.join(", ") || "All families"}</p>
                       </div>
-                      <SeverityBadge
-                        tone={
-                          pool.tone === "critical" ? "critical" :
-                          pool.tone === "watch" ? "high" :
-                          "low"
-                        }
-                      >
-                        {Math.round(pool.utilization * 100)}%
-                      </SeverityBadge>
+                      <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${pool.tone === 'critical' ? 'badge-critical' : pool.tone === 'watch' ? 'badge-warning' : 'badge-stable'}`}>
+                        {Math.round(pool.utilization * 100)}% Util
+                      </span>
                     </div>
-                    <div className="grid grid-cols-3 gap-2 text-xs mb-3">
-                      <div>
-                        <span className="text-[var(--text-tertiary)]">Active</span>
-                        <div className="font-semibold text-[var(--text-primary)]">
-                          {pool.activeAgents}
-                        </div>
+
+                    <div className="grid grid-cols-3 gap-4 mb-4">
+                      <div className="bg-surface-base rounded-xl p-3">
+                        <p className="label-sm text-[9px] opacity-40">Active</p>
+                        <p className="font-bold text-on-background">{pool.activeAgents}</p>
                       </div>
-                      <div>
-                        <span className="text-[var(--text-tertiary)]">Reserve</span>
-                        <div className="font-semibold text-[var(--text-primary)]">
-                          {pool.reserveAgents}
-                        </div>
+                      <div className="bg-surface-base rounded-xl p-3">
+                        <p className="label-sm text-[9px] opacity-40">Reserve</p>
+                        <p className="font-bold text-on-background">{pool.reserveAgents}</p>
                       </div>
-                      <div>
-                        <span className="text-[var(--text-tertiary)]">Capacity</span>
-                        <div className="font-semibold text-[var(--text-primary)]">
-                          {pool.concurrentCapacity}
-                        </div>
+                      <div className="bg-surface-base rounded-xl p-3">
+                        <p className="label-sm text-[9px] opacity-40">Capacity</p>
+                        <p className="font-bold text-on-background">{pool.concurrentCapacity}</p>
                       </div>
                     </div>
-                    <p className="text-xs text-[var(--text-secondary)] mb-3">
+
+                    <p className="text-sm text-on-surface-variant opacity-70 leading-relaxed mb-6">
                       {pool.recommendation}
                     </p>
-                    <div className="flex gap-2">
+
+                    <div className="flex gap-3">
                       <button
                         type="button"
                         onClick={() => handleAddReserve(pool.id)}
                         disabled={pool.reserveAgents === 0}
-                        className="flex-1 ghost-border rounded-full px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] transition hover:border-[var(--border-ghost-strong)] hover:text-[var(--text-primary)] disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="metallic-cta flex-1 rounded-xl px-4 py-2 text-xs font-bold transition-all disabled:opacity-30"
                       >
-                        Pull reserve
+                        Pull Reserve
                       </button>
                       <button
                         type="button"
                         onClick={() => handleAddOvertime(pool.id)}
-                        className="flex-1 ghost-border rounded-full px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] transition hover:border-[var(--border-ghost-strong)] hover:text-[var(--text-primary)]"
+                        className="flex-1 rounded-xl bg-surface-high px-4 py-2 text-xs font-bold text-on-background hover:bg-surface-highest transition-all"
                       >
-                        Add overtime
+                        Add Overtime
                       </button>
                     </div>
                   </div>
                 ))}
               </div>
-            </SurfaceCard>
+            </section>
 
-            {/* Zone readiness ledger */}
-            <SurfaceCard tone="muted" className="p-5">
-              <div className="mb-4 flex items-center justify-between gap-3">
+            {/* Zone Ledger */}
+            <section className="surface-card p-8">
+              <div className="mb-8 flex items-center justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
-                    Zone breakdown
-                  </p>
-                  <h2 className="mt-1 text-base font-semibold text-[var(--text-primary)]">
-                    Readiness ledger
-                  </h2>
+                  <span className="label-sm text-on-surface-variant opacity-60">Zone Breakdown</span>
+                  <h2 className="mt-2 text-2xl font-bold tracking-tight text-on-background">Readiness Ledger</h2>
                 </div>
-                <SeverityBadge tone="neutral">{model.zones.length} zones</SeverityBadge>
+                <span className="label-sm text-[10px] opacity-40">{model.zones.length} Zones Tracked</span>
               </div>
-              <div className="space-y-2 max-h-[400px] overflow-y-auto">
+
+              <div className="space-y-4">
                 {model.zones.map(zone => (
-                  <div
-                    key={zone.zoneId}
-                    className="surface-tier-2 ghost-border rounded-xl p-3"
-                  >
-                    <div className="flex items-start justify-between gap-3 mb-2">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-sm text-[var(--text-primary)]">
-                          {zone.zoneName}
-                        </h3>
-                        <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
+                  <div key={zone.zoneId} className="group relative rounded-xl p-5 transition-all hover:bg-surface-low">
+                    <div className="flex justify-between items-center mb-4">
+                      <div>
+                        <h3 className="font-bold text-on-background">{zone.zoneName}</h3>
+                        <p className="text-[10px] text-on-surface-variant opacity-50 uppercase tracking-widest font-bold">
                           {zone.activeEvents} events · {zone.activeAlerts} alerts
                         </p>
                       </div>
-                      <SeverityBadge
-                        tone={
-                          zone.tone === "critical" ? "critical" :
-                          zone.tone === "watch" ? "high" :
-                          "low"
-                        }
-                      >
+                      <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${zone.tone === 'critical' ? 'badge-critical' : zone.tone === 'watch' ? 'badge-warning' : 'badge-stable'}`}>
                         {zone.tone}
-                      </SeverityBadge>
+                      </span>
                     </div>
-                    <div className="grid grid-cols-4 gap-2 text-xs">
+                    <div className="grid grid-cols-4 gap-4">
                       <div>
-                        <span className="text-[var(--text-tertiary)]">Claims</span>
-                        <div className="font-semibold text-[var(--text-primary)]">
-                          {zone.estimatedClaims}
-                        </div>
+                        <p className="label-sm text-[9px] opacity-30">Claims</p>
+                        <p className="font-bold text-sm text-on-background">{zone.estimatedClaims}</p>
                       </div>
                       <div>
-                        <span className="text-[var(--text-tertiary)]">Capacity</span>
-                        <div className="font-semibold text-[var(--text-primary)]">
-                          {zone.staffedCapacity}
-                        </div>
+                        <p className="label-sm text-[9px] opacity-30">Capacity</p>
+                        <p className="font-bold text-sm text-on-background">{zone.staffedCapacity}</p>
                       </div>
                       <div>
-                        <span className="text-[var(--text-tertiary)]">Reserve</span>
-                        <div className="font-semibold text-[var(--text-primary)]">
-                          {zone.reserveCapacity}
-                        </div>
+                        <p className="label-sm text-[9px] opacity-30">Reserve</p>
+                        <p className="font-bold text-sm text-on-background">{zone.reserveCapacity}</p>
                       </div>
                       <div>
-                        <span className="text-[var(--text-tertiary)]">Routes</span>
-                        <div className="font-semibold text-[var(--text-primary)]">
-                          {zone.routingDestinations}
-                        </div>
+                        <p className="label-sm text-[9px] opacity-30">Routes</p>
+                        <p className="font-bold text-sm text-on-background">{zone.routingDestinations}</p>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
-            </SurfaceCard>
+            </section>
           </div>
-
-          {/* Source health monitoring */}
-          <SurfaceCard tone="glass" className="p-5">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
-                  Data pipeline
-                </p>
-                <h2 className="mt-1 text-base font-semibold text-[var(--text-primary)]">
-                  Source health
-                </h2>
-              </div>
-              <SeverityBadge tone="neutral">{model.sourceHealth.length} sources</SeverityBadge>
-            </div>
-            <div className="space-y-2">
-              {model.sourceHealth.map(source => (
-                <div
-                  key={source.source}
-                  className="surface-tier-2 ghost-border rounded-xl p-3 flex items-center justify-between gap-4"
-                >
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-sm text-[var(--text-primary)]">
-                      {source.source}
-                    </h3>
-                    <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
-                      {source.eventCount} events · {source.alertCount} alerts
-                      {source.minutesSinceLastEvent !== null && (
-                        <> · {source.minutesSinceLastEvent}m ago</>
-                      )}
-                    </p>
-                  </div>
-                  <SeverityBadge
-                    tone={
-                      source.tone === "critical" ? "critical" :
-                      source.tone === "watch" ? "high" :
-                      "low"
-                    }
-                  >
-                    {source.statusLabel}
-                  </SeverityBadge>
-                </div>
-              ))}
-            </div>
-          </SurfaceCard>
         </>
       )}
     </div>

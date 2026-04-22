@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { SeverityBadge } from "@/components/SeverityBadge";
-import { SurfaceCard } from "@/components/SurfaceCard";
 import {
   ALERT_PRIORITY,
   formatAbsoluteTime,
@@ -24,11 +22,9 @@ function StatPill({
   value: string | number;
 }) {
   return (
-    <div className="rounded-[22px] bg-white/6 px-4 py-3">
-      <p className="text-xs uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
-        {label}
-      </p>
-      <p className="mt-2 text-lg font-semibold text-[var(--text-primary)]">{value}</p>
+    <div className="flex-1 rounded-xl bg-surface-low px-4 py-3">
+      <p className="label-sm opacity-50">{label}</p>
+      <p className="mt-1 font-bold text-on-background">{value}</p>
     </div>
   );
 }
@@ -55,67 +51,63 @@ export function CommandProtocolPanel({
   const focusHref = selectedEvent ? `/impact?eventId=${selectedEvent.id}` : "/impact";
 
   return (
-    <SurfaceCard tone="glass" className="p-5">
-      <div className="flex items-start justify-between gap-3">
+    <div className="surface-card p-8">
+      <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
-            Command protocol
-          </p>
-          <h2 className="mt-1 text-xl font-semibold text-[var(--text-primary)]">
-            Response directives
-          </h2>
+          <span className="label-sm text-on-surface-variant opacity-60">Command Protocol</span>
+          <h2 className="mt-2 text-2xl font-bold tracking-tight text-on-background">Response Directives</h2>
         </div>
-        <SeverityBadge tone={protocolTone}>
-          {leadAlert ? "Protocol live" : "Standby"}
-        </SeverityBadge>
+        <div className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${protocolTone === 'critical' ? 'badge-critical' : protocolTone === 'medium' ? 'badge-warning' : 'badge-stable'}`}>
+          {leadAlert ? "Protocol Live" : "Standby"}
+        </div>
       </div>
 
-      <div className="mt-5 rounded-[26px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <SeverityBadge tone={protocolTone}>
-            {leadAlert ? leadAlert.alert_level : "Blue watch"}
-          </SeverityBadge>
-          <span className="text-xs uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+      <div className="mt-8 rounded-2xl bg-surface-low p-6">
+        <div className="flex items-center gap-3">
+           <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${protocolTone === 'critical' ? 'badge-critical' : protocolTone === 'medium' ? 'badge-warning' : 'badge-stable'}`}>
+            {leadAlert ? leadAlert.alert_level : "Blue Watch"}
+          </span>
+          <span className="label-sm text-[10px] opacity-40">
             {selectedEvent ? "Focused event protocol" : "Theater-wide protocol"}
           </span>
         </div>
 
-        <p className="mt-4 text-lg font-semibold text-[var(--text-primary)]">
+        <p className="mt-4 text-xl font-bold leading-tight text-on-background">
           {leadAlert?.recommended_action || "Monitor the live dashboard and hold response teams on standby."}
         </p>
-        <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+        <p className="mt-3 text-sm leading-relaxed text-on-surface-variant opacity-70">
           {selectedEvent
             ? `${selectedEvent.title} is currently selected for drill-down and handoff into impact analysis.`
             : "Use the incident board to set focus, then hand off into impact analysis with the selected event context."}
         </p>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <StatPill label="Active alerts" value={summary?.active_alerts ?? alerts.length} />
+      <div className="mt-6 flex gap-4">
+        <StatPill label="Active Alerts" value={summary?.active_alerts ?? alerts.length} />
         <StatPill
           label="Exposure"
           value={formatCompactAmount(summary?.estimated_total_amount ?? 0)}
         />
         <StatPill
-          label="Last update"
-          value={latestUpdateAt ? formatAbsoluteTime(latestUpdateAt) : "Awaiting feed"}
+          label="Last Update"
+          value={latestUpdateAt ? formatAbsoluteTime(latestUpdateAt) : "Awaiting Feed"}
         />
       </div>
 
-      <div className="mt-5 flex flex-wrap gap-2">
+      <div className="mt-8 flex gap-3">
         <Link
           href={focusHref}
-          className="rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition hover:bg-white/14"
+          className="metallic-cta flex-1 rounded-xl px-4 py-3 text-center text-sm font-bold transition-all"
         >
-          {selectedEvent ? "Open focused impact brief" : "Open impact workspace"}
+          {selectedEvent ? "Open Impact Brief" : "Impact Workspace"}
         </Link>
         <Link
           href="/pipeline"
-          className="rounded-full border border-white/8 px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-white/16 hover:text-[var(--text-primary)]"
+          className="flex-1 rounded-xl bg-surface-high px-4 py-3 text-center text-sm font-bold text-on-background transition-all hover:bg-surface-highest"
         >
-          Open pipeline
+          View Pipeline
         </Link>
       </div>
-    </SurfaceCard>
+    </div>
   );
 }

@@ -27,11 +27,11 @@ export function EventRowList({
 
   if (loading) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-4">
         {[0, 1, 2, 3].map((index) => (
           <div
             key={index}
-            className="h-24 animate-pulse rounded-[24px] bg-white/6"
+            className="h-24 animate-pulse rounded-2xl bg-surface-low"
           />
         ))}
       </div>
@@ -40,14 +40,14 @@ export function EventRowList({
 
   if (events.length === 0) {
     return (
-      <div className="flex min-h-[220px] items-center justify-center rounded-[24px] border border-dashed border-[var(--border-ghost)] bg-white/3 px-6 text-center text-sm text-[var(--text-tertiary)]">
-        {emptyMessage}
+      <div className="flex min-h-[220px] items-center justify-center rounded-2xl border-2 border-dashed border-surface-high p-8 text-center text-on-surface-variant opacity-40">
+        <p className="font-bold">{emptyMessage}</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {events.map((event) => {
         const alert = alertByEventId.get(event.id);
         const selected = selectedEventId === event.id;
@@ -55,45 +55,51 @@ export function EventRowList({
         return (
           <div
             key={event.id}
-            className={[
-              "ghost-border rounded-[24px] px-4 py-4 transition",
+            className={`rounded-xl p-5 transition-all duration-200 ${
               selected
-                ? "bg-white/9 shadow-[0_18px_34px_rgba(7,12,24,0.24)]"
-                : "surface-tier-1 hover:bg-white/7",
-            ].join(" ")}
+                ? "bg-surface-low shadow-sm ring-1 ring-primary/5"
+                : "hover:bg-surface-low/50"
+            }`}
           >
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-3">
                   <SeverityBadge tone={alert?.alert_level || "neutral"}>
                     {alert ? `${alert.alert_level} alert` : event.severity_label}
                   </SeverityBadge>
-                  <span className="text-xs uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-40">
                     {event.event_type}
                   </span>
-                  <span className="text-xs text-[var(--text-tertiary)]">
+                  <span className="text-[10px] text-on-surface-variant opacity-40">
                     {formatDateTime(event.detected_at)}
                   </span>
                 </div>
-                <p className="mt-3 truncate text-base font-semibold text-[var(--text-primary)]">
+                <p className="mt-3 truncate text-lg font-bold text-on-background">
                   {event.title}
                 </p>
-                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--text-secondary)]">
-                  <span>{event.region_name || event.source}</span>
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-on-surface-variant opacity-60">
+                  <span className="font-bold">{event.region_name || event.source}</span>
+                  <span className="h-1 w-1 rounded-full bg-on-surface-variant/20" />
                   <span>Severity {event.severity_score}</span>
-                  {alert ? (
+                  {alert && (
                     <>
-                      <span>{alert.estimated_claim_count} modeled claims</span>
-                      <span>{formatAmount(alert.estimated_total_amount)}</span>
+                      <span className="h-1 w-1 rounded-full bg-on-surface-variant/20" />
+                      <span className="font-bold text-on-background">{alert.estimated_claim_count} claims</span>
+                      <span className="h-1 w-1 rounded-full bg-on-surface-variant/20" />
+                      <span className="font-bold text-on-background">{formatAmount(alert.estimated_total_amount)}</span>
                     </>
-                  ) : null}
+                  )}
                 </div>
               </div>
 
               <button
                 type="button"
                 onClick={() => onEventSelect(event.id)}
-                className="ghost-border inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition hover:border-[var(--border-ghost-strong)] hover:bg-white/6"
+                className={`rounded-lg px-4 py-2 text-xs font-bold transition-all ${
+                  selected
+                    ? "bg-primary text-white"
+                    : "bg-surface-high text-on-background hover:bg-surface-highest"
+                }`}
               >
                 {ctaLabel}
               </button>

@@ -1,23 +1,7 @@
 "use client";
 import type { EventDetail as EventDetailType } from "@/lib/types";
-import { SeverityBadge } from "@/components/SeverityBadge";
 import { formatAmount, formatDateTime, formatPercent } from "@/lib/formatters";
 import { deriveImpactModel } from "@/lib/impactModel";
-
-const SEVERITY_COLORS: Record<string, string> = {
-  minor: "text-[var(--accent-cyan)]",
-  moderate: "text-[var(--accent-amber)]",
-  major: "text-[var(--accent-coral)]",
-  severe: "text-[var(--accent-coral)]",
-  critical: "text-[var(--accent-violet)]",
-};
-
-const ALERT_BADGE_TONE = {
-  low: "low",
-  medium: "medium",
-  high: "high",
-  critical: "critical",
-} as const;
 
 interface EventDetailProps {
   detail: EventDetailType | null;
@@ -37,144 +21,105 @@ export function EventDetail({ detail, loading, onClose }: EventDetailProps) {
 
   if (loading) {
     return (
-      <div className="glass-panel rounded-[28px] p-6 animate-pulse">
-        <div className="mb-4 h-6 w-3/4 rounded bg-white/8" />
-        <div className="mb-4 h-24 rounded-[24px] bg-white/6" />
-        <div className="mb-4 h-60 rounded-[24px] bg-white/6" />
-        <div className="h-48 rounded-[24px] bg-white/6" />
+      <div className="surface-card p-8 animate-pulse">
+        <div className="mb-4 h-6 w-3/4 rounded bg-surface-low" />
+        <div className="mb-4 h-24 rounded-2xl bg-surface-low" />
+        <div className="mb-4 h-60 rounded-2xl bg-surface-low" />
+        <div className="h-48 rounded-2xl bg-surface-low" />
       </div>
     );
   }
 
   if (!detail) return null;
 
-  const { event, impact_zone, matches, estimates, alert } = detail;
-  const sevColor = SEVERITY_COLORS[event.severity_label] || "text-slate-400";
+  const { event, matches, estimates, alert } = detail;
   const impactModel = deriveImpactModel(detail);
   const estimateMap = new Map(estimates.map((estimate) => [estimate.exposure_match_id, estimate]));
   const chartHeights = impactModel.trajectory.map((point) => 174 - point.share * 132);
   const chartPath = buildPath(chartHeights);
 
+  const tone = alert ? alert.alert_level : 'neutral';
+
   return (
-    <div className="glass-panel rounded-[28px] p-5">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+    <div className="surface-card p-8">
+      <div className="mb-8 flex flex-wrap items-start justify-between gap-6">
         <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
-            Impact dossier
-          </p>
-          <h3 className="mt-2 text-lg font-bold text-[var(--text-primary)]">{event.title}</h3>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span className="rounded-full border border-[var(--border-ghost)] bg-white/5 px-2.5 py-1 text-xs text-[var(--text-secondary)]">
+          <span className="label-sm text-on-surface-variant opacity-60">Impact Dossier</span>
+          <h3 className="mt-2 text-2xl font-bold tracking-tight text-on-background">{event.title}</h3>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <span className="rounded-lg bg-surface-low px-3 py-1 text-xs font-bold text-on-background">
               {event.event_type}
             </span>
-            <span className={`text-xs font-semibold ${sevColor}`}>
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${tone === 'critical' ? 'badge-critical' : tone === 'medium' || tone === 'high' ? 'badge-warning' : 'badge-stable'}`}>
               {event.severity_label} ({event.severity_score})
             </span>
-            <span className="text-xs text-[var(--text-tertiary)]">{event.source}</span>
+            <span className="text-xs text-on-surface-variant opacity-60">{event.source}</span>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <SeverityBadge tone={alert?.alert_level || "neutral"}>
-            {alert ? `${alert.alert_level} alert` : "No active alert"}
-          </SeverityBadge>
-          <SeverityBadge tone="medium">
-            {impact_zone?.country_code || event.region_name || "Global"}
-          </SeverityBadge>
-          {onClose ? (
+        <div className="flex flex-wrap items-center gap-3">
+           {onClose && (
             <button
               type="button"
               onClick={onClose}
-              className="ghost-border rounded-full px-3 py-1 text-xs font-medium text-[var(--text-secondary)] transition hover:border-[var(--border-ghost-strong)] hover:text-[var(--text-primary)]"
+              className="rounded-lg border border-surface-high px-4 py-2 text-xs font-bold text-on-background transition-all hover:bg-surface-high"
             >
               Close
             </button>
-          ) : null}
+          )}
         </div>
       </div>
 
-      {event.summary ? (
-        <p className="mb-6 max-w-4xl text-sm text-[var(--text-secondary)]">
+      {event.summary && (
+        <p className="mb-8 max-w-4xl text-base leading-relaxed text-on-surface-variant opacity-80">
           {event.summary}
         </p>
-      ) : null}
+      )}
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-[24px] bg-white/5 p-4">
-          <p className="text-xs uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
-            Alert state
-          </p>
-          <div className="mt-3 flex items-center gap-2">
-            <SeverityBadge tone={alert ? ALERT_BADGE_TONE[alert.alert_level] : "neutral"}>
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-2xl bg-surface-low p-6">
+          <p className="label-sm text-[10px] opacity-40 mb-3">Alert State</p>
+          <div className="flex items-center gap-2">
+            <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${tone === 'critical' ? 'badge-critical' : tone === 'medium' || tone === 'high' ? 'badge-warning' : 'badge-stable'}`}>
               {alert?.alert_level || "standby"}
-            </SeverityBadge>
-            <span className="text-xs text-[var(--text-secondary)]">
+            </span>
+            <span className="text-xs font-bold text-on-background truncate">
               {alert?.recommended_action || "No escalation yet"}
             </span>
           </div>
         </div>
-        <div className="rounded-[24px] bg-white/5 p-4">
-          <p className="text-xs uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
-            Policies in zone
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-[var(--text-primary)]">
-            {impactModel.policyCount}
-          </p>
-          <p className="mt-1 text-xs text-[var(--text-secondary)]">
-            {impact_zone?.zone_type
-              ? `Impact zone: ${impact_zone.zone_type}`
-              : "Derived from current exposure matches"}
-          </p>
+        <div className="rounded-2xl bg-surface-low p-6">
+          <p className="label-sm text-[10px] opacity-40 mb-1">Policies in Zone</p>
+          <p className="text-3xl font-bold">{impactModel.policyCount}</p>
         </div>
-        <div className="rounded-[24px] bg-white/5 p-4">
-          <p className="text-xs uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
-            Estimated claims
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-[var(--text-primary)]">
-            {impactModel.estimatedClaims}
-          </p>
-          <p className="mt-1 text-xs text-[var(--text-secondary)]">
-            Avg probability {formatPercent(impactModel.averageProbability, 0)}
-          </p>
+        <div className="rounded-2xl bg-surface-low p-6">
+          <p className="label-sm text-[10px] opacity-40 mb-1">Estimated Claims</p>
+          <p className="text-3xl font-bold">{impactModel.estimatedClaims}</p>
         </div>
-        <div className="rounded-[24px] bg-white/5 p-4">
-          <p className="text-xs uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
-            Estimated amount
-          </p>
-          <p className="mt-3 text-3xl font-semibold text-[var(--text-primary)]">
-            {formatAmount(impactModel.estimatedAmount)}
-          </p>
-          <p className="mt-1 text-xs text-[var(--text-secondary)]">
-            Detected {formatDateTime(event.detected_at)}
-          </p>
+        <div className="rounded-2xl bg-surface-low p-6">
+          <p className="label-sm text-[10px] opacity-40 mb-1">Estimated Amount</p>
+          <p className="text-3xl font-bold">{formatAmount(impactModel.estimatedAmount)}</p>
         </div>
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.8fr)]">
-        <div className="rounded-[26px] bg-white/5 p-5">
-          <div className="flex items-start justify-between gap-3">
+      <div className="mt-10 grid gap-10 xl:grid-cols-12">
+        <div className="xl:col-span-7 rounded-2xl bg-surface-low p-8">
+          <div className="flex items-start justify-between mb-8">
             <div>
-              <p className="text-xs uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
-                Claim trajectory
-              </p>
-              <h4 className="mt-1 text-base font-semibold text-[var(--text-primary)]">
-                Severity-adjusted reserve path
-              </h4>
+              <span className="label-sm text-[10px] opacity-40">Claim Trajectory</span>
+              <h4 className="mt-1 text-lg font-bold text-on-background">Severity-Adjusted Reserve Path</h4>
             </div>
-            <span className="text-xs text-[var(--text-secondary)]">
-              Driven by live claims × severity pressure
-            </span>
           </div>
 
           <svg
             viewBox="0 0 340 190"
-            className="mt-6 h-[220px] w-full overflow-visible"
+            className="h-[220px] w-full overflow-visible"
             aria-hidden="true"
           >
             <defs>
               <linearGradient id="trajectory-stroke" x1="0%" x2="100%" y1="0%" y2="0%">
-                <stop offset="0%" stopColor="var(--accent-cyan)" />
-                <stop offset="100%" stopColor="var(--accent-violet)" />
+                <stop offset="0%" stopColor="var(--on-background)" />
+                <stop offset="100%" stopColor="#45464d" />
               </linearGradient>
             </defs>
             {[42, 88, 134].map((gridY) => (
@@ -184,14 +129,14 @@ export function EventDetail({ detail, loading, onClose }: EventDetailProps) {
                 x2="314"
                 y1={gridY}
                 y2={gridY}
-                stroke="rgba(148,163,184,0.14)"
+                stroke="rgba(0,0,0,0.05)"
                 strokeDasharray="4 6"
               />
             ))}
             <path
               d={`${chartPath} L 314 174 L 18 174 Z`}
-              fill="url(#trajectory-stroke)"
-              opacity="0.12"
+              fill="var(--on-background)"
+              opacity="0.03"
             />
             <path
               d={chartPath}
@@ -205,73 +150,48 @@ export function EventDetail({ detail, loading, onClose }: EventDetailProps) {
                 key={impactModel.trajectory[index].label}
                 cx={index * 74 + 18}
                 cy={height}
-                r="5"
-                fill="var(--surface-light)"
-                stroke="var(--accent-cyan)"
+                r="4"
+                fill="white"
+                stroke="var(--on-background)"
                 strokeWidth="2"
               />
             ))}
           </svg>
 
-          <div className="grid gap-3 md:grid-cols-5">
+          <div className="grid grid-cols-5 gap-3 mt-8">
             {impactModel.trajectory.map((point) => (
-              <div key={point.label} className="rounded-[18px] bg-white/4 px-3 py-3">
-                <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
-                  {point.label}
-                </p>
-                <p className="mt-2 text-lg font-semibold text-[var(--text-primary)]">
-                  {point.claims}
-                </p>
-                <p className="text-xs text-[var(--text-secondary)]">
-                  {formatAmount(point.amount)}
-                </p>
+              <div key={point.label} className="text-center">
+                <p className="label-sm text-[9px] opacity-40">{point.label}</p>
+                <p className="mt-1 font-bold text-sm">{point.claims}</p>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="rounded-[26px] bg-white/5 p-5">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
-                Policy mix
-              </p>
-              <h4 className="mt-1 text-base font-semibold text-[var(--text-primary)]">
-                Exposure breakdown by policy class
-              </h4>
-            </div>
-            <span className="text-xs text-[var(--text-secondary)]">
-              Live mix from affected matches
-            </span>
+        <div className="xl:col-span-5 rounded-2xl bg-surface-low p-8">
+          <div className="mb-8">
+            <span className="label-sm text-[10px] opacity-40">Policy Mix</span>
+            <h4 className="mt-1 text-lg font-bold text-on-background">Exposure Breakdown</h4>
           </div>
 
-          <div className="mt-6 space-y-4">
+          <div className="space-y-6">
             {impactModel.policyMix.map((item) => (
               <div key={item.label}>
-                <div className="mb-2 flex items-center justify-between gap-3 text-sm">
+                <div className="mb-3 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
                     <span
-                      className="h-2.5 w-2.5 rounded-full"
-                      style={{ backgroundColor: item.tone }}
+                      className="h-2 w-2 rounded-full"
+                      style={{ backgroundColor: item.tone === 'var(--accent-cyan)' ? '#000000' : item.tone }}
                     />
-                    <span className="text-[var(--text-primary)]">{item.label}</span>
+                    <span className="font-bold">{item.label}</span>
                   </div>
-                  <span className="text-[var(--text-secondary)]">
-                    {item.policies} policies · {formatPercent(item.share, 0)}
-                  </span>
+                  <span className="opacity-60">{item.policies} policies ({formatPercent(item.share, 0)})</span>
                 </div>
-                <div className="h-2.5 rounded-full bg-white/8">
+                <div className="h-1.5 rounded-full bg-surface-high overflow-hidden">
                   <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${Math.max(item.share * 100, 8)}%`,
-                      backgroundColor: item.tone,
-                    }}
+                    className="h-full bg-primary"
+                    style={{ width: `${Math.max(item.share * 100, 4)}%` }}
                   />
-                </div>
-                <div className="mt-2 flex items-center justify-between gap-3 text-xs text-[var(--text-secondary)]">
-                  <span>{formatAmount(item.amount)} modeled loss</span>
-                  <span>Avg probability {formatPercent(item.averageProbability, 0)}</span>
                 </div>
               </div>
             ))}
@@ -280,55 +200,44 @@ export function EventDetail({ detail, loading, onClose }: EventDetailProps) {
       </div>
 
       {matches.length > 0 ? (
-        <div className="mt-6">
-          <h4 className="mb-3 text-sm font-semibold text-[var(--text-primary)]">
-            Affected policies ({matches.length})
-          </h4>
-          <div className="overflow-x-auto rounded-[24px] border border-[var(--border-ghost)] bg-[rgba(255,255,255,0.03)]">
+        <div className="mt-10">
+          <div className="flex items-center justify-between mb-6">
+            <h4 className="text-sm font-bold text-on-background uppercase tracking-wider opacity-40">
+              Affected Policies ({matches.length})
+            </h4>
+          </div>
+          <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="subdued-table-header border-b border-[var(--border-ghost)]">
-                  <th className="py-2 pr-3 text-left">Policy</th>
-                  <th className="py-2 pr-3 text-left">Type</th>
-                  <th className="py-2 pr-3 text-left">Holder</th>
-                  <th className="py-2 pr-3 text-left">Location</th>
-                  <th className="py-2 pr-3 text-right">Distance</th>
-                  <th className="py-2 pr-3 text-right">Probability</th>
-                  <th className="py-2 text-right">Est. Amount</th>
+                <tr className="text-left label-sm opacity-40 border-b border-surface-high">
+                  <th className="pb-4 pr-3">Policy</th>
+                  <th className="pb-4 pr-3">Type</th>
+                  <th className="pb-4 pr-3">Holder</th>
+                  <th className="pb-4 pr-3 text-right">Probability</th>
+                  <th className="pb-4 text-right">Est. Amount</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-surface-low">
                 {matches.map((match) => {
                   const estimate = estimateMap.get(match.id);
-
                   return (
                     <tr
                       key={match.id}
-                      className="border-b border-[rgba(148,163,184,0.1)] hover:bg-white/4"
+                      className="group transition-colors hover:bg-surface-low/50"
                     >
-                      <td className="py-2 pr-3 text-[var(--surface-light)]">
+                      <td className="py-4 pr-3 font-bold">
                         {match.policies?.policy_number || match.policy_id.slice(0, 8)}
                       </td>
-                      <td className="py-2 pr-3 text-[var(--text-secondary)]">
+                      <td className="py-4 pr-3 text-on-surface-variant opacity-70">
                         {match.policies?.policy_type || "—"}
                       </td>
-                      <td className="py-2 pr-3 text-[var(--text-secondary)]">
+                      <td className="py-4 pr-3 text-on-surface-variant opacity-70">
                         {match.policies?.policyholders?.name || "—"}
                       </td>
-                      <td className="py-2 pr-3 text-[var(--text-secondary)]">
-                        {match.insured_locations?.city ||
-                          match.insured_locations?.country_code ||
-                          "—"}
-                      </td>
-                      <td className="py-2 pr-3 text-right text-[var(--text-secondary)]">
-                        {match.distance_km != null
-                          ? `${match.distance_km.toFixed(0)} km`
-                          : match.match_method}
-                      </td>
-                      <td className="py-2 pr-3 text-right text-[var(--surface-light)]">
+                      <td className="py-4 pr-3 text-right font-bold">
                         {estimate ? formatPercent(estimate.claim_probability, 0) : "—"}
                       </td>
-                      <td className="py-2 text-right font-medium text-[var(--surface-light)]">
+                      <td className="py-4 text-right font-bold">
                         {estimate ? formatAmount(estimate.estimated_amount) : "—"}
                       </td>
                     </tr>
@@ -339,8 +248,8 @@ export function EventDetail({ detail, loading, onClose }: EventDetailProps) {
           </div>
         </div>
       ) : (
-        <p className="mt-6 text-sm text-[var(--text-tertiary)]">
-          No affected policies found.
+        <p className="mt-10 text-sm text-on-surface-variant opacity-40 text-center py-8 border-2 border-dashed border-surface-high rounded-2xl">
+          No affected policies found for this event focus.
         </p>
       )}
     </div>

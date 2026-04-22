@@ -7,20 +7,52 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   return (
-    <div className="relative min-h-screen">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(143,214,255,0.06),transparent_42%)]" />
-      <div className="relative flex min-h-screen flex-col lg:flex-row">
-        <aside className="shrink-0 p-4 sm:p-6 lg:w-[296px] lg:pr-0">
-          <div className="glass-panel h-full rounded-[30px] p-4 sm:p-5">
-            <SidebarNav />
-          </div>
+    <div className="relative min-h-screen bg-surface">
+      <div className="flex min-h-screen">
+        {/* Asymmetrical Sidebar */}
+        <aside className="w-72 shrink-0 bg-surface-low p-6 lg:p-8">
+          <SidebarNav />
         </aside>
 
-        <main className="min-w-0 flex-1 p-4 pt-0 sm:p-6 sm:pt-0 lg:p-8 lg:pl-6">
-          <div className="content-frame flex min-h-[calc(100vh-2rem)] flex-col rounded-[34px] px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+        {/* Main Workspace */}
+        <div className="flex min-w-0 flex-1 flex-col">
+          {/* Top Bar */}
+          <header className="flex h-20 items-center justify-between px-8 py-4">
+            <div className="flex items-center gap-8">
+              <span className="label-sm text-on-surface-variant opacity-60">Enterprise Ops</span>
+              <nav className="flex gap-6">
+                <button className="label-sm border-b-2 border-primary pb-1 text-on-background">Live Stream</button>
+                <button className="label-sm pb-1 text-on-surface-variant hover:text-on-background transition-colors">Historical</button>
+                <button className="label-sm pb-1 text-on-surface-variant hover:text-on-background transition-colors">Reports</button>
+              </nav>
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="relative">
+                <input 
+                  type="text" 
+                  placeholder="Search assets..." 
+                  className="w-64 rounded-full bg-surface-high px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/20"
+                />
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-high text-on-background">
+                🔔
+              </div>
+              <div className="flex items-center gap-3 border-l border-on-surface-variant/10 pl-6">
+                <div className="text-right">
+                  <p className="text-sm font-semibold">B. Mahto</p>
+                  <p className="text-xs text-on-surface-variant">Director of Risk</p>
+                </div>
+                <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">
+                  BM
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <main className="flex-1 overflow-y-auto px-8 pb-8">
             {children}
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
     </div>
   );

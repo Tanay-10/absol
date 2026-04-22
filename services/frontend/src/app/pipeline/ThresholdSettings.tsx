@@ -1,5 +1,6 @@
+"use client";
+
 import { useState } from "react";
-import { SurfaceCard } from "@/components/SurfaceCard";
 import type { ThresholdSettings as ThresholdSettingsType } from "@/lib/ops-types";
 
 interface ThresholdSettingsProps {
@@ -19,16 +20,11 @@ export function ThresholdSettings({ thresholds, loading, onUpdate }: ThresholdSe
 
   if (loading) {
     return (
-      <SurfaceCard tone="muted" className="p-6">
-        <div className="animate-pulse">
-          <div className="mb-4 h-6 w-48 rounded bg-[var(--surface-3)]" />
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-16 rounded bg-[var(--surface-3)]" />
-            ))}
-          </div>
-        </div>
-      </SurfaceCard>
+      <div className="space-y-6 animate-pulse">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-20 rounded-xl bg-surface-low" />
+        ))}
+      </div>
     );
   }
 
@@ -84,45 +80,47 @@ export function ThresholdSettings({ thresholds, loading, onUpdate }: ThresholdSe
   ];
 
   return (
-    <SurfaceCard tone="muted" className="overflow-hidden p-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-          Threshold settings
-        </h3>
-        <button
-          onClick={() => setLocalThresholds(thresholds)}
-          className="text-sm text-[var(--accent-cyan)] transition-opacity hover:opacity-80"
-        >
-          Reset
-        </button>
-      </div>
-
-      <div className="space-y-4">
-        {settings.map(({ key, label, description, min, max, step }) => (
-          <div key={key} className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-[var(--text-primary)]">
+    <div className="space-y-8">
+      {settings.map(({ key, label, description, min, max, step }) => (
+        <div key={key} className="group flex flex-col gap-3">
+          <div className="flex items-end justify-between">
+            <div className="flex flex-col">
+              <label className="text-sm font-bold text-on-background">
                 {label}
               </label>
-              <span className="text-sm font-semibold text-[var(--accent-cyan)]">
-                {localThresholds[key]}
-              </span>
+              <p className="text-xs text-on-surface-variant opacity-50 mt-1">
+                {description}
+              </p>
             </div>
-            <input
-              type="range"
-              min={min}
-              max={max}
-              step={step}
-              value={localThresholds[key]}
-              onChange={(e) => handleChange(key, Number(e.target.value))}
-              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-[var(--surface-3)] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--accent-cyan)]"
-            />
-            <p className="text-xs text-[var(--text-tertiary)]">
-              {description}
-            </p>
+            <span className="text-lg font-bold text-on-background">
+              {localThresholds[key]}
+            </span>
           </div>
-        ))}
+          
+          <div className="relative flex items-center h-2">
+             <input
+                type="range"
+                min={min}
+                max={max}
+                step={step}
+                value={localThresholds[key]}
+                onChange={(e) => handleChange(key, Number(e.target.value))}
+                className="w-full h-1.5 bg-surface-high rounded-full appearance-none cursor-pointer accent-primary"
+              />
+          </div>
+        </div>
+      ))}
+      <div className="pt-4 border-t border-surface-high">
+        <button
+          onClick={() => {
+            setLocalThresholds(thresholds);
+            onUpdate(thresholds);
+          }}
+          className="text-xs font-bold uppercase tracking-widest text-on-surface-variant opacity-40 hover:opacity-100 transition-opacity"
+        >
+          Reset to Factory Defaults
+        </button>
       </div>
-    </SurfaceCard>
+    </div>
   );
 }

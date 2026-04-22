@@ -1,7 +1,6 @@
 "use client";
 
 import type { Alert, DashboardSummary } from "@/lib/types";
-import { SeverityBadge } from "@/components/SeverityBadge";
 import { formatCompactAmount, getAlertBreakdown } from "@/lib/dashboard";
 
 interface StatsCardsProps {
@@ -22,30 +21,31 @@ function StatCard({
   value: string | number;
   subtext?: string;
 }) {
-  const toneClasses = {
-    neutral:
-      "bg-[linear-gradient(180deg,rgba(143,214,255,0.16),rgba(143,214,255,0.04))] text-[var(--accent-cyan)]",
-    medium:
-      "bg-[linear-gradient(180deg,rgba(242,207,141,0.18),rgba(242,207,141,0.04))] text-[var(--accent-amber)]",
-    critical:
-      "bg-[linear-gradient(180deg,rgba(201,178,255,0.2),rgba(201,178,255,0.05))] text-[var(--accent-violet)]",
-  } as const;
+  const badgeClass = {
+    neutral: "badge-stable",
+    medium: "badge-warning",
+    critical: "badge-critical",
+  }[tone];
 
   return (
-    <div className="rounded-[26px] border border-white/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-xs uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+    <div className="surface-card p-6">
+      <div className="flex items-center justify-between mb-6">
+        <span className="label-sm text-on-surface-variant opacity-60">
           {label}
         </span>
-        <SeverityBadge tone={tone}>{tone === "neutral" ? "Blue" : tone === "medium" ? "Amber" : "Critical"}</SeverityBadge>
-      </div>
-      <span className={`mt-4 inline-flex rounded-2xl px-3 py-2 text-3xl font-semibold ${toneClasses[tone]}`}>
-        {value}
-      </span>
-      {subtext && (
-        <span className="mt-3 block text-sm leading-6 text-[var(--text-secondary)]">
-          {subtext}
+        <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${badgeClass}`}>
+          {tone === "neutral" ? "Stable" : tone === "medium" ? "Warning" : "Critical"}
         </span>
+      </div>
+      <div className="flex items-baseline gap-2">
+        <span className="text-4xl font-bold tracking-tight text-on-background">
+          {value}
+        </span>
+      </div>
+      {subtext && (
+        <p className="mt-4 text-xs leading-relaxed text-on-surface-variant opacity-70">
+          {subtext}
+        </p>
       )}
     </div>
   );
@@ -59,11 +59,11 @@ export function StatsCards({
 }: StatsCardsProps) {
   if (loading && !summary && alerts.length === 0) {
     return (
-      <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 2xl:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="ghost-border h-24 animate-pulse rounded-[24px] bg-white/6 p-4"
+            className="surface-card h-40 animate-pulse bg-surface-low"
           />
         ))}
       </div>
@@ -82,7 +82,7 @@ export function StatsCards({
     alerts.reduce((sum, alert) => sum + alert.total_policies_affected, 0);
 
   return (
-    <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4">
+    <div className="grid gap-6 md:grid-cols-2 2xl:grid-cols-4">
       <StatCard
         tone="critical"
         label="Critical response"

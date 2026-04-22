@@ -2,27 +2,26 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SeverityBadge } from "@/components/SeverityBadge";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Dashboard", hint: "Live signals", symbol: "◉" },
+  { href: "/", label: "Dashboard", hint: "Main theater", symbol: "⊡" },
   {
     href: "/impact",
     label: "Impact Analysis",
-    hint: "Exposure framing",
-    symbol: "◎",
+    hint: "Risk framing",
+    symbol: "◬",
   },
   {
     href: "/readiness",
     label: "Readiness",
-    hint: "Hybrid rehearsal",
-    symbol: "◌",
+    hint: "Capacity model",
+    symbol: "⊙",
   },
   {
     href: "/pipeline",
     label: "Pipeline",
-    hint: "Ingestion control",
-    symbol: "△",
+    hint: "Data health",
+    symbol: "⇅",
   },
 ];
 
@@ -36,93 +35,70 @@ export function SidebarNav() {
   const pathname = usePathname();
 
   return (
-    <div className="flex h-full flex-col gap-8">
-      <div className="space-y-5">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,rgba(245,235,215,0.95),rgba(183,152,102,0.92))] text-sm font-semibold text-[var(--ink-inverse)] shadow-[0_16px_36px_rgba(151,121,74,0.24)]">
-            SO
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-[0.24em] text-[var(--text-tertiary)]">
-              InsureShield
-            </p>
-            <p className="text-lg font-semibold text-[var(--text-primary)]">
-              Sovereign Observer
-            </p>
-          </div>
+    <div className="flex h-full flex-col gap-12">
+      {/* Brand Identity */}
+      <div className="flex items-center gap-4">
+        <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-primary text-white font-bold text-xl">
+          S
         </div>
-
-        <div className="surface-tier-1 ghost-border rounded-[24px] p-4">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-medium text-[var(--text-primary)]">
-              Executive command shell
-            </p>
-            <SeverityBadge tone="neutral">Premium UI</SeverityBadge>
-          </div>
-          <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">
-            Editorial framing, asymmetrical navigation, and tonal surfaces for live portfolio monitoring.
-          </p>
+        <div>
+          <h1 className="text-sm font-bold tracking-tight text-on-background">Sovereign Observer</h1>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-on-surface-variant opacity-50">Enterprise Intelligence</p>
         </div>
       </div>
 
-      <nav aria-label="Primary navigation" className="flex-1 space-y-2">
-        {NAV_ITEMS.map((item) => {
-          const active = isActive(pathname, item.href);
-          const className = [
-            "group flex items-center justify-between rounded-[22px] px-4 py-3 transition",
-            active
-              ? "surface-tier-2 border border-[var(--border-ghost-strong)] text-[var(--text-primary)] shadow-[0_12px_30px_rgba(6,10,18,0.16)]"
-              : item.href
-                ? "border border-transparent text-[var(--text-secondary)] hover:border-[var(--border-ghost)] hover:bg-white/4 hover:text-[var(--text-primary)]"
-                : "border border-transparent text-[var(--text-secondary)] opacity-80",
-          ].join(" ");
-          const content = (
-            <>
-              <div className="flex items-center gap-3">
-                <span className="text-base text-[var(--accent-cyan)] transition group-hover:text-[var(--surface-light)]">
+      {/* Main Navigation */}
+      <nav aria-label="Primary navigation" className="flex-1">
+        <div className="label-sm mb-6 text-on-surface-variant opacity-40">Command Center</div>
+        <div className="space-y-1">
+          {NAV_ITEMS.map((item) => {
+            const active = isActive(pathname, item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`group flex items-center gap-4 rounded-xl px-4 py-3 transition-all duration-200 ${
+                  active 
+                    ? "bg-surface-lowest text-on-background shadow-atmospheric" 
+                    : "text-on-surface-variant hover:bg-surface-high hover:text-on-background"
+                }`}
+              >
+                <span className={`text-xl ${active ? "text-primary" : "text-on-surface-variant opacity-60 group-hover:opacity-100"}`}>
                   {item.symbol}
                 </span>
-                <div>
-                  <p className="text-sm font-medium">{item.label}</p>
-                  <p className="text-xs text-[var(--text-tertiary)]">{item.hint}</p>
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold">{item.label}</span>
+                  <span className="text-[10px] text-on-surface-variant opacity-60">{item.hint}</span>
                 </div>
-              </div>
-              {active ? (
-                <span className="h-2.5 w-2.5 rounded-full bg-[var(--accent-gold)]" />
-              ) : null}
-            </>
-          );
-
-          if (!item.href) {
-            return (
-              <div key={item.label} className={className} aria-disabled="true">
-                {content}
-              </div>
+                {active && (
+                  <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
+                )}
+              </Link>
             );
-          }
+          })}
+        </div>
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={active ? "page" : undefined}
-              className={className}
-            >
-              {content}
-            </Link>
-          );
-        })}
+        <div className="label-sm mt-12 mb-6 text-on-surface-variant opacity-40">System Access</div>
+        <div className="space-y-1">
+          <button className="group flex w-full items-center gap-4 rounded-xl px-4 py-3 text-on-surface-variant hover:bg-surface-high hover:text-on-background transition-all">
+            <span className="text-xl opacity-60 group-hover:opacity-100">⚙</span>
+            <span className="text-sm font-semibold">Settings</span>
+          </button>
+          <button className="group flex w-full items-center gap-4 rounded-xl px-4 py-3 text-on-surface-variant hover:bg-surface-high hover:text-on-background transition-all">
+            <span className="text-xl opacity-60 group-hover:opacity-100">🔒</span>
+            <span className="text-sm font-semibold">Security</span>
+          </button>
+        </div>
       </nav>
 
-      <div className="surface-tier-1 ghost-border rounded-[24px] p-4">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm font-medium text-[var(--text-primary)]">
-            Operating mode
-          </p>
-          <SeverityBadge tone="medium">Hybrid demo</SeverityBadge>
+      {/* Operational Status */}
+      <div className="mt-auto border-t border-on-surface-variant/10 pt-8">
+        <div className="flex items-center gap-3">
+          <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+          <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Live Ops Feed Active</span>
         </div>
-        <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">
-          Follow live signals, move between analysis workspaces, and keep operators in one consistent command surface.
+        <p className="mt-2 text-xs leading-relaxed text-on-surface-variant opacity-60">
+          Last synchronization at 12:42 UTC. All systems report normal latency levels.
         </p>
       </div>
     </div>
