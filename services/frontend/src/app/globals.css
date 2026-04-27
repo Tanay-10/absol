@@ -3,45 +3,68 @@
 @theme inline {
   --font-sans: var(--font-inter), system-ui, sans-serif;
   
-  /* Sovereign Observer Palette */
-  --color-surface: #f8f9ff;
-  --color-surface-low: #eff4ff;
-  --color-surface-lowest: #ffffff;
-  --color-surface-high: #dce9ff;
-  --color-surface-highest: #d3e4fe;
-  
-  --color-primary: #000000;
-  --color-primary-container: #131b2e;
-  
-  --color-on-background: #0b1c30;
-  --color-on-surface: #0b1c30;
-  --color-on-surface-variant: #45464d;
-  
-  --color-error: #ba1a1a;
-  --color-error-container: #ffdad6;
+  /* Sovereign Observer Palette - Exact Match to Stitch HTML */
   --color-on-error-container: #93000a;
-  
-  --color-warning: #c76c00;
-  --color-warning-container: #ffdcc3;
-  --color-on-warning-container: #2f1500;
-  
-  --color-stable: #515f74;
-  --color-stable-container: #d5e3fc;
-  --color-on-stable-container: #0d1c2e;
+  --color-surface-container: #e5eeff;
+  --color-on-surface: #0b1c30;
+  --color-on-error: #ffffff;
+  --color-surface-dim: #cbdbf5;
+  --color-background: #f8f9ff;
+  --color-tertiary-fixed: #ffdcc3;
+  --color-on-tertiary-fixed-variant: #6e3900;
+  --color-on-primary-container: #7c839b;
+  --color-error-container: #ffdad6;
+  --color-on-tertiary: #ffffff;
+  --color-error: #ba1a1a;
+  --color-secondary-fixed: #d5e3fc;
+  --color-on-background: #0b1c30;
+  --color-on-tertiary-fixed: #2f1500;
+  --color-on-primary: #ffffff;
+  --color-surface-tint: #565e74;
+  --color-inverse-primary: #bec6e0;
+  --color-primary-container: #131b2e;
+  --color-on-secondary-fixed-variant: #3a485b;
+  --color-on-primary-fixed-variant: #3f465c;
+  --color-on-primary-fixed: #131b2e;
+  --color-surface-container-low: #eff4ff;
+  --color-inverse-surface: #213145;
+  --color-on-secondary-fixed: #0d1c2e;
+  --color-tertiary: #000000;
+  --color-surface-container-lowest: #ffffff;
+  --color-outline: #76777d;
+  --color-outline-variant: #c6c6cd;
+  --color-primary-fixed-dim: #bec6e0;
+  --color-on-tertiary-container: #c76c00;
+  --color-primary: #000000;
+  --color-surface: #f8f9ff;
+  --color-secondary-fixed-dim: #b9c7df;
+  --color-primary-fixed: #dae2fd;
+  --color-tertiary-fixed-dim: #ffb77d;
+  --color-surface-container-highest: #d3e4fe;
+  --color-secondary-container: #d5e3fc;
+  --color-surface-bright: #f8f9ff;
+  --color-on-secondary: #ffffff;
+  --color-inverse-on-surface: #eaf1ff;
+  --color-tertiary-container: #2f1500;
+  --color-surface-variant: #d3e4fe;
+  --color-surface-container-high: #dce9ff;
+  --color-on-surface-variant: #45464d;
+  --color-secondary: #515f74;
+  --color-on-secondary-container: #57657a;
 
   /* Elevation & Effects */
   --shadow-atmospheric: 0px 24px 48px rgba(11, 28, 48, 0.08);
-  --border-ghost: rgba(198, 198, 205, 0.15);
 }
 
 :root {
-  /* CSS Variables for legacy or specific use cases */
   --surface: #f8f9ff;
-  --surface-low: #eff4ff;
-  --surface-lowest: #ffffff;
-  --surface-high: #dce9ff;
   --on-background: #0b1c30;
   --on-surface-variant: #45464d;
+  --surface-container-lowest: #ffffff;
+  --error: #ba1a1a;
+  --tertiary: #000000;
+  --secondary: #515f74;
+  --primary-fixed-dim: #bec6e0;
 }
 
 * {
@@ -50,93 +73,39 @@
 
 html {
   min-height: 100%;
-  background: var(--surface);
+  background: var(--color-background);
 }
 
 body {
   min-height: 100vh;
-  background-color: var(--surface);
-  color: var(--on-background);
-  font-family: var(--font-inter), system-ui, sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-on-background);
+  font-family: var(--font-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Typography Enhancements */
-.display-lg {
-  font-size: 3.5rem;
-  line-height: 1.1;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.headline-md {
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.label-sm {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-/* Surface Philosophies (No-Line Rule) */
-.surface-base {
-  background-color: var(--surface);
-}
-
-.surface-card {
-  background-color: var(--surface-lowest);
-  box-shadow: var(--shadow-atmospheric);
-  border-radius: 0.75rem;
-}
-
-.surface-inset {
-  background-color: var(--surface-low);
-}
-
+/* Design System Utilities */
 .ghost-border {
-  border: 1px solid var(--border-ghost);
+  outline: 1px solid rgba(198, 198, 205, 0.15);
 }
 
-/* Glassmorphism Overlay */
-.glass-overlay {
+.glass-panel {
   background: rgba(211, 228, 254, 0.8);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
 
-/* Signature Metallic Finish */
-.metallic-cta {
-  background: linear-gradient(135deg, #000000 0%, #131b2e 100%);
-  color: #ffffff;
-  transition: all 0.2s ease;
+.atmospheric-shadow {
+  box-shadow: 0px 24px 48px rgba(11, 28, 48, 0.08);
 }
 
-.metallic-cta:hover {
-  filter: brightness(1.2);
-  transform: translateY(-1px);
-}
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-surface-container-highest); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-outline-variant); }
 
-/* Status Badges */
-.badge-critical {
-  background-color: #ffdad6;
-  color: #93000a;
-}
-
-.badge-warning {
-  background-color: #ffdcc3;
-  color: #2f1500;
-}
-
-.badge-stable {
-  background-color: #d5e3fc;
-  color: #0d1c2e;
-}
-
-/* Leaflet Overrides for Sovereign Observer */
+/* Leaflet Overrides */
 .leaflet-container {
   background: #f0f4ff !important;
 }
@@ -153,4 +122,20 @@ body {
   border-radius: 8px !important;
   padding: 8px 12px !important;
   box-shadow: var(--shadow-atmospheric) !important;
+}
+
+/* Status Badges - Exact Match */
+.badge-critical {
+  background-color: var(--color-error-container);
+  color: var(--color-on-error-container);
+}
+
+.badge-warning {
+  background-color: var(--color-tertiary-fixed);
+  color: var(--color-on-tertiary-fixed-variant);
+}
+
+.badge-stable {
+  background-color: var(--color-secondary-fixed);
+  color: var(--color-on-secondary-fixed-variant);
 }

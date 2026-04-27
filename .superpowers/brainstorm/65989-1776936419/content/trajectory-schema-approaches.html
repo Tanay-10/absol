@@ -1,0 +1,96 @@
+<h2>Trajectory Schema Structure</h2>
+<p class="subtitle">How should the JSONB column be shaped? Pick the approach that feels most natural to work with.</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-body">
+      <h3>A — Waypoint List</h3>
+      <p class="label" style="color:#22c55e">Recommended</p>
+      <p>Each waypoint is a self-contained object with timestamp, position, and state. Most readable, easy for frontend to iterate, interpolation is trivial.</p>
+      <pre style="background:#1e293b;color:#94a3b8;padding:12px;border-radius:8px;font-size:11px;margin-top:8px;overflow:auto">{
+  "waypoints": [
+    {
+      "t": "2026-04-23T12:00:00Z",
+      "lat": 25.5,
+      "lon": -85.2,
+      "state": {
+        "intensity": 85,
+        "speed_kph": 45,
+        "direction_deg": 320,
+        "category": 3,
+        "radius_km": 120
+      }
+    },
+    { "t": "2026-04-23T13:00:00Z",
+      "lat": 26.1, "lon": -85.8,
+      "state": { "intensity": 90, ... }
+    }
+  ],
+  "interval_minutes": 60,
+  "current_index": 5,
+  "total_waypoints": 24
+}</pre>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><h4>Pros</h4><ul><li>Self-documenting</li><li>Easy interpolation</li><li>Add/remove fields freely</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Slightly more bytes per record</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-body">
+      <h3>B — Parallel Arrays</h3>
+      <p>Timestamps, coordinates, and property arrays stored in parallel. Compact, but harder to read and error-prone if arrays get out of sync.</p>
+      <pre style="background:#1e293b;color:#94a3b8;padding:12px;border-radius:8px;font-size:11px;margin-top:8px;overflow:auto">{
+  "timestamps": [
+    "2026-04-23T12:00:00Z",
+    "2026-04-23T13:00:00Z"
+  ],
+  "coordinates": [
+    [25.5, -85.2],
+    [26.1, -85.8]
+  ],
+  "properties": [
+    { "intensity": 85, "category": 3 },
+    { "intensity": 90, "category": 4 }
+  ],
+  "current_index": 5
+}</pre>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><h4>Pros</h4><ul><li>Smaller payload size</li><li>Array-slice friendly</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Arrays must stay in sync</li><li>Harder to read/debug</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-body">
+      <h3>C — GeoJSON FeatureCollection</h3>
+      <p>Standard GeoJSON format with timestamped Point features. Compatible with mapping libraries directly, but verbose and adds nesting with little gain for this use case.</p>
+      <pre style="background:#1e293b;color:#94a3b8;padding:12px;border-radius:8px;font-size:11px;margin-top:8px;overflow:auto">{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-85.2, 25.5]
+      },
+      "properties": {
+        "time": "2026-04-23T12:00:00Z",
+        "intensity": 85,
+        "category": 3
+      }
+    }
+  ],
+  "current_index": 5
+}</pre>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><h4>Pros</h4><ul><li>GeoJSON standard</li><li>Some libs accept directly</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Very verbose</li><li>Extra nesting</li><li>Overkill for hackathon</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>

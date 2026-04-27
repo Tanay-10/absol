@@ -1,0 +1,104 @@
+<h2>Design — Mock Data & API</h2>
+<p class="subtitle">How the 5 sample events are generated and how trajectory surfaces in the API response.</p>
+
+<div class="section">
+  <h3>Mock Events — 5 samples with realistic trajectories</h3>
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <tr style="background:#1e293b">
+      <th style="padding:8px;text-align:left;color:#94a3b8">Event</th>
+      <th style="padding:8px;text-align:left;color:#94a3b8">Type</th>
+      <th style="padding:8px;text-align:left;color:#94a3b8">Path character</th>
+      <th style="padding:8px;text-align:left;color:#94a3b8">Interval</th>
+      <th style="padding:8px;text-align:left;color:#94a3b8">Waypoints</th>
+      <th style="padding:8px;text-align:left;color:#94a3b8">State fields</th>
+    </tr>
+    <tr style="border-top:1px solid #334155">
+      <td style="padding:8px">🌀 Hurricane Mara</td>
+      <td style="padding:8px">cyclone</td>
+      <td style="padding:8px">Smooth parabolic arc (Gulf → landfall)</td>
+      <td style="padding:8px">60 min</td>
+      <td style="padding:8px">48</td>
+      <td style="padding:8px">category, wind_speed_kph, radius_km, direction_deg</td>
+    </tr>
+    <tr style="border-top:1px solid #334155">
+      <td style="padding:8px">🌪 Tornado EF3</td>
+      <td style="padding:8px">tornado</td>
+      <td style="padding:8px">Erratic jitter (random walk with drift)</td>
+      <td style="padding:8px">5 min</td>
+      <td style="padding:8px">36</td>
+      <td style="padding:8px">intensity, speed_kph, direction_deg, width_m</td>
+    </tr>
+    <tr style="border-top:1px solid #334155">
+      <td style="padding:8px">🌊 Indian Ocean Tsunami</td>
+      <td style="padding:8px">tsunami</td>
+      <td style="padding:8px">Radial wave-front expansion from epicenter</td>
+      <td style="padding:8px">15 min</td>
+      <td style="padding:8px">16</td>
+      <td style="padding:8px">wave_height_m, speed_kph, radius_km (growing)</td>
+    </tr>
+    <tr style="border-top:1px solid #334155">
+      <td style="padding:8px">🔥 California Wildfire</td>
+      <td style="padding:8px">wildfire</td>
+      <td style="padding:8px">Expanding radius (wind-driven perimeter growth)</td>
+      <td style="padding:8px">30 min</td>
+      <td style="padding:8px">24</td>
+      <td style="padding:8px">intensity, radius_km (growing), acres_burned</td>
+    </tr>
+    <tr style="border-top:1px solid #334155">
+      <td style="padding:8px">🌧 Mississippi Flood</td>
+      <td style="padding:8px">flood</td>
+      <td style="padding:8px">Slow downstream drift + expanding inundation</td>
+      <td style="padding:8px">60 min</td>
+      <td style="padding:8px">24</td>
+      <td style="padding:8px">intensity, radius_km (growing), water_level_m</td>
+    </tr>
+  </table>
+</div>
+
+<div class="section">
+  <h3>Generator: <code>services/database/seeds/004_trajectory_mock_data.py</code></h3>
+  <p>A standalone Python script that:</p>
+  <ul style="color:#94a3b8;font-size:13px;line-height:1.8">
+    <li>Generates the 5 events above as <code>CanonicalEvent</code> objects with <code>trajectory</code> populated</li>
+    <li>Emits a ready-to-run <code>004_trajectory_mock_data.sql</code> (INSERT statements)</li>
+    <li>Each path type has its own builder function (<code>build_hurricane_path()</code>, <code>build_tornado_path()</code>, etc.)</li>
+    <li>Path shapes are computed with simple math (sine curve for hurricane, random-walk for tornado, circular radius for tsunami/wildfire/flood)</li>
+    <li><code>current_index</code> is set to ~50% through the path so the event looks "in progress" on the demo</li>
+  </ul>
+</div>
+
+<div class="section">
+  <h3>API — <code>GET /events/{id}</code> response (extended)</h3>
+  <pre style="background:#1e293b;color:#94a3b8;padding:14px;border-radius:8px;font-size:12px;overflow:auto">{
+  "event": {
+    "id": "...",
+    "event_type": "cyclone",
+    <span style="color:#34d399">"is_mobile": true,</span>
+    <span style="color:#34d399">"trajectory_bounds": { "min_lat": 18.2, "min_lon": -97.5,
+                              "max_lat": 30.1, "max_lon": -80.3 },</span>
+    <span style="color:#34d399">"trajectory": {
+      "waypoints": [
+        { "t": "2026-04-20T00:00:00Z", "lat": 18.2, "lon": -97.5,
+          "state": { "category": 1, "wind_speed_kph": 130, "radius_km": 80 } },
+        { "t": "2026-04-20T01:00:00Z", "lat": 18.6, "lon": -96.8,
+          "state": { "category": 2, "wind_speed_kph": 155, "radius_km": 90 } },
+        ...
+      ],
+      "interval_minutes": 60,
+      "current_index": 24,
+      "total_waypoints": 48
+    },</span>
+    "severity_label": "critical",
+    ... (all existing fields unchanged)
+  },
+  "impact_zone": { ... },
+  "matches": [ ... ],
+  "alert": { ... }
+}</pre>
+  <p style="font-size:12px;color:#64748b;margin-top:8px">The backend router change is minimal: the <code>SELECT *</code> on events already returns all columns — trajectory surfaces automatically once the column exists.</p>
+</div>
+
+<div class="section">
+  <h3>New API endpoint: <code>GET /events?is_mobile=true</code></h3>
+  <p style="font-size:13px;color:#94a3b8">One-line addition to the existing list endpoint — lets the map view pre-filter to only animated events without loading full trajectory payloads.</p>
+</div>

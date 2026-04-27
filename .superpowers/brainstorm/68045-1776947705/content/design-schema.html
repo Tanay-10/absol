@@ -1,0 +1,77 @@
+<h2>Design — Schema Extension</h2>
+<p class="subtitle">New columns added to <code>events</code> (highlighted). All existing columns and consumers unchanged.</p>
+
+<div class="section">
+  <h3>DB Migration: <code>002_add_trajectory.sql</code></h3>
+  <pre style="background:#1e293b;color:#94a3b8;padding:16px;border-radius:8px;font-size:12px;overflow:auto">ALTER TABLE events
+  ADD COLUMN IF NOT EXISTS <span style="color:#34d399;font-weight:bold">is_mobile</span>          BOOLEAN  DEFAULT false,
+  ADD COLUMN IF NOT EXISTS <span style="color:#34d399;font-weight:bold">trajectory_bounds</span>  JSONB    DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS <span style="color:#34d399;font-weight:bold">trajectory</span>         JSONB    DEFAULT NULL;
+
+-- Fast map filter: "give me all active mobile events"
+CREATE INDEX IF NOT EXISTS <span style="color:#34d399">idx_events_mobile</span>
+  ON events (is_mobile) WHERE is_mobile = true;
+
+-- COMMENT for documentation
+COMMENT ON COLUMN events.is_mobile IS
+  'True for event types that move over time (cyclone, tornado, tsunami, storm, wildfire, flood)';
+COMMENT ON COLUMN events.trajectory IS
+  'Waypoint-list trajectory. Schema: {waypoints:[{t,lat,lon,state:{...}}], interval_minutes, current_index, total_waypoints}';
+COMMENT ON COLUMN events.trajectory_bounds IS
+  'Bounding box of full trajectory path: {min_lat, min_lon, max_lat, max_lon}';</pre>
+</div>
+
+<div class="section">
+  <h3>Pydantic Extension: <code>TrajectoryData</code> model</h3>
+  <pre style="background:#1e293b;color:#94a3b8;padding:16px;border-radius:8px;font-size:12px;overflow:auto">class WaypointState(BaseModel):
+    intensity:      Optional[float] = None   # 0–100 normalized
+    speed_kph:      Optional[float] = None
+    direction_deg:  Optional[float] = None   # 0–360
+    category:       Optional[int]   = None   # Saffir-Simpson, EF scale, etc.
+    radius_km:      Optional[float] = None   # for expanding events
+
+class Waypoint(BaseModel):
+    t:    datetime                           # UTC timestamp
+    lat:  float = Field(ge=-90,  le=90)
+    lon:  float = Field(ge=-180, le=180)
+    state: WaypointState = Field(default_factory=WaypointState)
+
+class TrajectoryData(BaseModel):
+    waypoints:         List[Waypoint]
+    interval_minutes:  int                  # nominal spacing
+    current_index:     int = 0              # pointer to "now"
+    total_waypoints:   int                  # len(waypoints)
+
+# Added to CanonicalEvent (optional — null for stationary events):
+<span style="color:#34d399">trajectory: Optional[TrajectoryData] = None</span></pre>
+</div>
+
+<div class="section">
+  <h3>Backward Compatibility</h3>
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <tr style="background:#1e293b">
+      <th style="padding:8px;text-align:left;color:#94a3b8">Consumer</th>
+      <th style="padding:8px;text-align:left;color:#94a3b8">Impact</th>
+    </tr>
+    <tr style="border-top:1px solid #334155">
+      <td style="padding:8px">Existing <code>GET /events</code> list</td>
+      <td style="padding:8px;color:#22c55e">None — trajectory columns not returned in list query</td>
+    </tr>
+    <tr style="border-top:1px solid #334155">
+      <td style="padding:8px">Existing <code>GET /events/{id}</code></td>
+      <td style="padding:8px;color:#22c55e">None — new columns appear as <code>null</code> for old events</td>
+    </tr>
+    <tr style="border-top:1px solid #334155">
+      <td style="padding:8px">Ingestion pipeline</td>
+      <td style="padding:8px;color:#22c55e">None — <code>trajectory</code> is optional in CanonicalEvent</td>
+    </tr>
+    <tr style="border-top:1px solid #334155">
+      <td style="padding:8px">Geo-matching / alerts</td>
+      <td style="padding:8px;color:#22c55e">None — new columns ignored by existing logic</td>
+    </tr>
+    <tr style="border-top:1px solid #334155">
+      <td style="padding:8px">schema_version</td>
+      <td style="padding:8px;color:#f59e0b">Bumped to <code>"v2"</code> only on events that carry a trajectory</td>
+    </tr>
+  </table>
+</div>

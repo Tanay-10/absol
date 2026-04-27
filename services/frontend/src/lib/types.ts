@@ -1,3 +1,26 @@
+export interface WaypointState {
+  intensity?: number;
+  speed_kph?: number;
+  direction_deg?: number;
+  category?: number;
+  radius_km?: number;
+  [key: string]: any;
+}
+
+export interface Waypoint {
+  t: string;
+  lat: number;
+  lon: number;
+  state: WaypointState;
+}
+
+export interface TrajectoryData {
+  waypoints: Waypoint[];
+  interval_minutes: number;
+  current_index: number;
+  total_waypoints: number;
+}
+
 export interface DashboardEvent {
   id: string;
   canonical_id: string;
@@ -16,6 +39,8 @@ export interface DashboardEvent {
   country_codes: string[] | null;
   occurred_at: string;
   detected_at: string;
+  is_mobile?: boolean | number; // SQLite might return 0/1
+  trajectory?: TrajectoryData;
 }
 
 export interface ImpactZone {

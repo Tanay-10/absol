@@ -5,6 +5,7 @@ import json
 import random
 import uuid
 from datetime import datetime, timedelta
+from pathlib import Path
 
 from backend.database import Database
 
@@ -35,6 +36,9 @@ CREATE TABLE IF NOT EXISTS events (
     bbox            TEXT,
     region_name     TEXT,
     country_codes   TEXT,
+    is_mobile       BOOLEAN DEFAULT 0,
+    trajectory_bounds TEXT,
+    trajectory      TEXT,
     severity_inputs TEXT,
     source_url      TEXT,
     raw_payload_ref TEXT,
@@ -420,6 +424,17 @@ async def init_database(db: Database) -> None:
     """Create schema, load reference data, and generate mock data if empty."""
     await db.executescript(SCHEMA_SQL)
 
+    # Check for missing columns in existing database (Migration)
+    columns_info = await db.fetch_all("PRAGMA table_info(events)")
+    column_names = [col["name"] for col in columns_info]
+    
+    if "is_mobile" not in column_names:
+        await db.execute("ALTER TABLE events ADD COLUMN is_mobile BOOLEAN DEFAULT 0")
+    if "trajectory_bounds" not in column_names:
+        await db.execute("ALTER TABLE events ADD COLUMN trajectory_bounds TEXT DEFAULT NULL")
+    if "trajectory" not in column_names:
+        await db.execute("ALTER TABLE events ADD COLUMN trajectory TEXT DEFAULT NULL")
+
     # Load reference data if empty
     existing = await db.fetch_one("SELECT COUNT(*) AS c FROM event_policy_relevance")
     if existing and existing["c"] == 0:
@@ -439,3 +454,12 @@ async def init_database(db: Database) -> None:
         await db.insert_many("policyholders", policyholders)
         await db.insert_many("policies", policies)
         await db.insert_many("insured_locations", locations)
+
+    # Load trajectory mock data if it exists and wasn't loaded
+    trajectory_seed = Path(__file__).parent.parent.parent.parent / "database" / "seeds" / "004_trajectory_mock_data.sql"
+    if trajectory_seed.exists():
+        # Check if we already have mobile events to avoid duplicates
+        existing_mobile = await db.fetch_one("SELECT COUNT(*) AS c FROM events WHERE is_mobile = 1")
+        if existing_mobile and existing_mobile["c"] == 0:
+            with open(trajectory_seed, "r") as f:
+                await db.executescript(f.read())

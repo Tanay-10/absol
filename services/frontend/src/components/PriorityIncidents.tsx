@@ -1,10 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import {
-  ALERT_PRIORITY,
   compareIncidents,
-  formatAbsoluteTime,
   formatCompactAmount,
-  formatRelativeTime,
   getAlertTone,
   getEventTone,
   getRegionLabel,
@@ -31,112 +30,82 @@ export function PriorityIncidents({
     .sort((left, right) => compareIncidents(left, right, alertsByEventId))
     .slice(0, 6);
 
-  return (
-    <div className="surface-card p-8">
-      <div className="mb-8 flex items-end justify-between">
-        <div>
-          <span className="label-sm text-on-surface-variant opacity-60">Global Event Theater</span>
-          <h2 className="mt-2 text-2xl font-bold tracking-tight text-on-background">Priority Incidents</h2>
-        </div>
-        <div className="label-sm text-[10px] opacity-40">Showing {incidentRows.length} active threats</div>
+  if (loading && incidentRows.length === 0) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((row) => (
+          <div key={row} className="h-20 animate-pulse rounded-xl bg-surface-container-lowest" />
+        ))}
       </div>
+    );
+  }
 
-      {loading && incidentRows.length === 0 ? (
-        <div className="space-y-6">
-          {[1, 2, 3].map((row) => (
-            <div
-              key={row}
-              className="h-32 animate-pulse rounded-2xl bg-surface-low"
-            />
-          ))}
-        </div>
-      ) : incidentRows.length === 0 ? (
-        <div className="rounded-2xl border-2 border-dashed border-surface-high p-12 text-center text-on-surface-variant opacity-50">
-          Live incidents will appear here once the event feed is populated.
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {incidentRows.map((event, index) => {
-            const alert = alertsByEventId.get(event.id);
-            const isSelected = selectedEventId === event.id;
-            const impactHref = `/impact?eventId=${event.id}`;
-            const tone = alert ? getAlertTone(alert.alert_level) : getEventTone(event.severity_label);
+  return (
+    <div className="bg-surface-container-lowest rounded-xl ghost-border shadow-sm overflow-hidden">
+      <div className="p-5 border-b border-surface-container-high flex justify-between items-center">
+        <h3 className="text-lg font-bold text-on-background">Active Priority Incidents</h3>
+        <button className="text-sm font-semibold text-primary hover:text-on-surface-variant transition-colors flex items-center gap-1 uppercase tracking-widest text-[10px]">
+          View Full Register &rarr;
+        </button>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-surface-container-low text-[10px] text-on-surface-variant uppercase tracking-widest font-bold">
+              <th className="px-6 py-3 w-1/4">Event Identification</th>
+              <th className="px-6 py-3 w-1/5">Status/Severity</th>
+              <th className="px-6 py-3 w-1/6">Est. Exposure</th>
+              <th className="px-6 py-3 w-1/6">Time Detected</th>
+              <th className="px-6 py-3 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody className="text-sm">
+            {incidentRows.map((event) => {
+              const alert = alertsByEventId.get(event.id);
+              const tone = alert ? getAlertTone(alert.alert_level) : getEventTone(event.severity_label);
+              const isSelected = selectedEventId === event.id;
 
-            return (
-              <article
-                key={event.id}
-                className={`relative rounded-2xl p-6 transition-all duration-300 ${
-                  isSelected 
-                    ? "bg-surface-low shadow-sm" 
-                    : "hover:bg-surface-low/50"
-                }`}
-              >
-                <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <span className="text-[10px] font-bold text-on-surface-variant opacity-40">
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
-                      <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${tone === 'critical' ? 'badge-critical' : tone === 'medium' ? 'badge-warning' : 'badge-stable'}`}>
-                        {alert ? `${alert.alert_level} alert` : event.severity_label}
-                      </span>
-                      <span className="label-sm text-[10px] text-on-surface-variant opacity-60">
-                        {event.event_type}
-                      </span>
-                    </div>
-
-                    <h3 className="mt-3 text-lg font-bold text-on-background leading-tight">
-                      {event.title}
-                    </h3>
-                    <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-on-surface-variant opacity-70">
-                      {event.summary ||
-                        `${getRegionLabel(event)} remains under watch with severity score ${event.severity_score}.`}
-                    </p>
-
-                    <div className="mt-4 flex flex-wrap items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-50">
-                      <span>{getRegionLabel(event)}</span>
-                      <span className="h-1 w-1 rounded-full bg-on-surface-variant/20" />
-                      <span>{formatRelativeTime(event.detected_at)}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-3 lg:w-48 lg:items-end">
-                    {alert && (
-                      <div className="text-right">
-                        <p className="text-sm font-bold text-on-background">
-                          {formatCompactAmount(alert.estimated_total_amount)}
-                        </p>
-                        <p className="text-[10px] text-on-surface-variant opacity-60">
-                          Est. Exposure
-                        </p>
+              return (
+                <tr 
+                  key={event.id} 
+                  className={`border-b-4 border-background hover:bg-surface-container-low transition-colors group cursor-pointer ${isSelected ? 'bg-surface-container-low' : ''}`}
+                  onClick={() => onEventSelect(event.id)}
+                >
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded bg-surface-container flex items-center justify-center text-on-surface text-lg">
+                        {event.event_type === 'cyclone' ? '🌀' : event.event_type === 'wildfire' ? '🔥' : '⚠️'}
                       </div>
-                    )}
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => onEventSelect(event.id)}
-                        className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                          isSelected
-                            ? "bg-primary text-white"
-                            : "bg-surface-high text-on-background hover:bg-surface-highest"
-                        }`}
-                      >
-                        {isSelected ? "Focused" : "Focus"}
-                      </button>
-                      <Link
-                        href={impactHref}
-                        className="rounded-lg border border-surface-high px-3 py-1.5 text-xs font-bold text-on-background transition-all hover:bg-surface-high"
-                      >
-                        Impact
-                      </Link>
+                      <div>
+                        <div className="font-bold text-on-surface truncate max-w-[200px]">{event.title}</div>
+                        <div className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider">{getRegionLabel(event)}</div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      )}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${tone === 'critical' ? 'badge-critical' : tone === 'medium' ? 'badge-warning' : 'badge-stable'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${tone === 'critical' ? 'bg-error' : tone === 'medium' ? 'bg-tertiary' : 'bg-secondary'}`}></span>
+                      {alert ? alert.alert_level : event.severity_label}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="font-bold text-on-surface">{alert ? formatCompactAmount(alert.estimated_total_amount) : '—'}</div>
+                    <div className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider">{alert ? `${alert.total_policies_affected} Policies` : 'Calculating...'}</div>
+                  </td>
+                  <td className="px-6 py-4 text-on-surface-variant font-bold text-[11px] uppercase">
+                    {new Date(event.detected_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <button className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold text-primary border border-outline-variant px-3 py-1.5 rounded hover:bg-surface-container-high bg-white uppercase tracking-widest">
+                      Deep Dive
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

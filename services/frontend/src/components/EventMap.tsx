@@ -25,6 +25,12 @@ interface EventMapProps {
   variant?: "dashboard" | "impact";
 }
 
+// World bounds to prevent infinite horizontal scrolling
+const WORLD_BOUNDS: [[number, number], [number, number]] = [
+  [-85, -180],
+  [85, 180],
+];
+
 function fitToSelection(
   map: import("leaflet").Map,
   event: DashboardEvent | undefined,
@@ -93,7 +99,7 @@ export function EventMap({
 
   const resetView = useCallback(() => {
     if (!map) return;
-    map.flyTo([20, 0], 2, { duration: 0.75 });
+    map.flyTo([20, 0], 2.5, { duration: 0.75 });
   }, [map]);
 
   const focusSelection = useCallback(() => {
@@ -107,18 +113,23 @@ export function EventMap({
   }, [impactZone, map, selectedEvent, selectedEventId, variant]);
 
   return (
-    <div className="map-frame h-full w-full overflow-hidden rounded-[26px]">
+    <div className="map-frame h-full w-full overflow-hidden rounded-[26px] bg-surface-low">
       <MapContainer
         center={[20, 0]}
-        zoom={2}
+        zoom={2.5}
+        minZoom={2.5}
+        maxBounds={WORLD_BOUNDS}
+        maxBoundsViscosity={1.0}
         ref={setMap}
         zoomControl
         className="h-full w-full"
         style={{ height: "100%", width: "100%" }}
       >
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+          noWrap={true}
+          bounds={WORLD_BOUNDS}
         />
         {mappableEvents.map((event) => (
           <MapEventMarkerDynamic
@@ -130,52 +141,50 @@ export function EventMap({
           />
         ))}
       </MapContainer>
-      <div className="pointer-events-none absolute inset-x-4 top-4 flex items-start justify-between gap-3">
-        <div className="map-overlay-panel pointer-events-auto max-w-[240px]">
-          <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-tertiary)]">
-            Legend
-          </p>
-          <div className="mt-3 grid gap-2 text-xs text-[var(--text-secondary)]">
+      
+      {/* Legend & Controls - Redesigned for light theme */}
+      <div className="pointer-events-none absolute inset-x-6 top-6 flex items-start justify-between gap-4 z-[1000]">
+        <div className="bg-white/90 backdrop-blur-md p-5 rounded-2xl shadow-atmospheric pointer-events-auto border border-on-surface-variant/5">
+          <p className="label-sm text-[10px] opacity-40 mb-3">Threat Severity</p>
+          <div className="grid gap-2.5">
             {[
-              ["Minor / monitor", "var(--accent-cyan)"],
-              ["Elevated watch", "var(--accent-amber)"],
-              ["Severe / critical", "var(--accent-coral)"],
-            ].map(([label, color]) => (
-              <div key={label} className="flex items-center gap-2">
-                <span
-                  className="h-2.5 w-2.5 rounded-full"
-                  style={{ backgroundColor: color }}
-                />
-                <span>{label}</span>
+              ["Minor / Monitor", "badge-stable"],
+              ["Elevated Watch", "badge-warning"],
+              ["Severe / Critical", "badge-critical"],
+            ].map(([label, badgeClass]) => (
+              <div key={label} className="flex items-center gap-3">
+                <span className={`h-2 w-2 rounded-full ${badgeClass === 'badge-stable' ? 'bg-stable' : badgeClass === 'badge-warning' ? 'bg-warning' : 'bg-error'}`} />
+                <span className="text-[11px] font-bold text-on-background opacity-80">{label}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="map-overlay-stack pointer-events-auto">
-          <button type="button" onClick={resetView} className="map-overlay-button">
+        <div className="flex flex-col gap-2 pointer-events-auto">
+          <button 
+            type="button" 
+            onClick={resetView} 
+            className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-atmospheric border border-on-surface-variant/5 text-[10px] font-bold uppercase tracking-widest text-on-background hover:bg-white transition-all"
+          >
             Global view
           </button>
-          {variant === "impact" && selectedEventId ? (
+          {variant === "impact" && selectedEventId && (
             <button
               type="button"
               onClick={focusSelection}
-              className="map-overlay-button"
+              className="metallic-cta px-4 py-2 rounded-xl shadow-lg text-[10px] font-bold uppercase tracking-widest"
             >
               Focus event
             </button>
-          ) : null}
+          )}
         </div>
       </div>
 
-      <div className="pointer-events-none absolute bottom-4 left-4">
-        <div className="map-overlay-panel max-w-[260px]">
-          <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-tertiary)]">
-            Live tooltip layer
-          </p>
-          <p className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">
-            Hover or open a marker to inspect live alert posture and jump directly into
-            the same event dossier.
+      <div className="pointer-events-none absolute bottom-6 left-6 z-[1000]">
+        <div className="bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-atmospheric border border-on-surface-variant/5 max-w-[240px]">
+          <p className="label-sm text-[10px] opacity-40 mb-2">Live Tooltip Layer</p>
+          <p className="text-[11px] leading-relaxed text-on-surface-variant opacity-70 italic">
+            Markers dynamically scale based on modeled exposure density and real-time alerts.
           </p>
         </div>
       </div>

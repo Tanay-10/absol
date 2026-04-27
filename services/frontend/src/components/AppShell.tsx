@@ -1,3 +1,5 @@
+"use client";
+
 import type { ReactNode } from "react";
 import { SidebarNav } from "@/components/SidebarNav";
 
@@ -7,52 +9,52 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   return (
-    <div className="relative min-h-screen bg-surface">
-      <div className="flex min-h-screen">
-        {/* Asymmetrical Sidebar */}
-        <aside className="w-72 shrink-0 bg-surface-low p-6 lg:p-8">
-          <SidebarNav />
-        </aside>
+    <div className="antialiased min-h-screen flex overflow-hidden bg-background">
+      {/* SideNavBar (JSON Component) */}
+      <aside className="fixed left-0 top-0 h-full w-[280px] z-50 bg-slate-50 border-r border-surface-container-high/20 hidden md:flex flex-col">
+        <SidebarNav />
+      </aside>
 
-        {/* Main Workspace */}
-        <div className="flex min-w-0 flex-1 flex-col">
-          {/* Top Bar */}
-          <header className="flex h-20 items-center justify-between px-8 py-4">
-            <div className="flex items-center gap-8">
-              <span className="label-sm text-on-surface-variant opacity-60">Enterprise Ops</span>
-              <nav className="flex gap-6">
-                <button className="label-sm border-b-2 border-primary pb-1 text-on-background">Live Stream</button>
-                <button className="label-sm pb-1 text-on-surface-variant hover:text-on-background transition-colors">Historical</button>
-                <button className="label-sm pb-1 text-on-surface-variant hover:text-on-background transition-colors">Reports</button>
-              </nav>
+      {/* Main Content Wrapper */}
+      <div className="flex-1 ml-0 md:ml-[280px] flex flex-col h-screen overflow-hidden relative bg-surface">
+        {/* TopAppBar (JSON Component) */}
+        <header className="fixed top-0 right-0 z-40 w-full md:w-[calc(100%-280px)] bg-white/80 backdrop-blur-xl border-b border-surface-container-high/10 shadow-[0_1px_2px_rgba(0,0,0,0.05)] flex justify-between items-center px-8 h-16 tracking-tight text-slate-900">
+          {/* Left: Search */}
+          <div className="flex-1 max-w-md">
+            <div className="relative group">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm group-focus-within:text-primary transition-colors">🔍</span>
+              <input 
+                className="w-full bg-surface-container-low border-0 outline-none rounded-md py-2 pl-10 pr-4 text-sm text-on-surface placeholder:text-on-surface-variant focus:ring-1 focus:ring-primary/20 transition-all ghost-border" 
+                placeholder="Search events, policies, or locations..." 
+                type="text"
+              />
             </div>
-            <div className="flex items-center gap-6">
-              <div className="relative">
-                <input 
-                  type="text" 
-                  placeholder="Search assets..." 
-                  className="w-64 rounded-full bg-surface-high px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/20"
-                />
-              </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-high text-on-background">
+          </div>
+
+          {/* Right: Actions & Profile */}
+          <div className="flex items-center gap-4">
+            <button className="bg-primary text-white hover:bg-primary-container px-4 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-colors active:scale-95 duration-200 shadow-sm hidden sm:block">
+              Deploy Resource
+            </button>
+            <div className="flex items-center gap-2 border-l border-surface-container ml-2 pl-4">
+              <button className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors text-slate-500 relative">
                 🔔
-              </div>
-              <div className="flex items-center gap-3 border-l border-on-surface-variant/10 pl-6">
-                <div className="text-right">
-                  <p className="text-sm font-semibold">B. Mahto</p>
-                  <p className="text-xs text-on-surface-variant">Director of Risk</p>
-                </div>
-                <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">
-                  BM
-                </div>
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full"></span>
+              </button>
+              <button className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors text-slate-500">
+                ⚙️
+              </button>
+              <div className="ml-2 w-8 h-8 rounded-full overflow-hidden border border-surface-container-high bg-primary flex items-center justify-center text-white font-bold text-xs cursor-pointer">
+                BM
               </div>
             </div>
-          </header>
+          </div>
+        </header>
 
-          <main className="flex-1 overflow-y-auto px-8 pb-8">
-            {children}
-          </main>
-        </div>
+        {/* Scrollable Canvas */}
+        <main className="flex-1 overflow-y-auto pt-24 pb-12 px-8">
+           {children}
+        </main>
       </div>
     </div>
   );

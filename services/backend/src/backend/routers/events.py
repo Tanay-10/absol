@@ -12,6 +12,7 @@ router = APIRouter(tags=["events"])
 async def list_events(
     event_type: str | None = Query(None),
     severity: str | None = Query(None),
+    is_mobile: bool | None = Query(None),
     limit: int = Query(50, le=200),
 ):
     conditions: list[str] = []
@@ -22,6 +23,9 @@ async def list_events(
     if severity:
         conditions.append("severity_label = ?")
         params.append(severity)
+    if is_mobile is not None:
+        conditions.append("is_mobile = ?")
+        params.append(1 if is_mobile else 0)
     where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
     params.append(limit)
     return await db.fetch_all(

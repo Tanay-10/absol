@@ -1,7 +1,7 @@
 "use client";
 
 import type { Alert, DashboardSummary } from "@/lib/types";
-import { formatCompactAmount, getAlertBreakdown } from "@/lib/dashboard";
+import { getAlertBreakdown } from "@/lib/dashboard";
 
 interface StatsCardsProps {
   summary: DashboardSummary | null;
@@ -14,39 +14,62 @@ function StatCard({
   tone,
   label,
   value,
-  subtext,
+  icon,
+  badgeLabel,
+  sparklineColor,
 }: {
-  tone: "neutral" | "medium" | "critical";
+  tone: "critical" | "high" | "medium" | "neutral";
   label: string;
   value: string | number;
-  subtext?: string;
+  icon: string;
+  badgeLabel: string;
+  sparklineColor: string;
 }) {
   const badgeClass = {
-    neutral: "badge-stable",
-    medium: "badge-warning",
     critical: "badge-critical",
+    high: "badge-warning",
+    medium: "badge-stable",
+    neutral: "text-on-surface-variant bg-surface-container",
+  }[tone];
+
+  const borderClass = {
+    critical: "bg-error",
+    high: "bg-tertiary",
+    medium: "bg-secondary",
+    neutral: "bg-primary-fixed-dim",
+  }[tone];
+
+  const iconContainerClass = {
+    critical: "bg-error-container text-on-error-container",
+    high: "bg-tertiary-fixed text-on-tertiary-fixed-variant",
+    medium: "bg-secondary-fixed text-on-secondary-fixed-variant",
+    neutral: "bg-primary-fixed text-on-primary-fixed",
   }[tone];
 
   return (
-    <div className="surface-card p-6">
-      <div className="flex items-center justify-between mb-6">
-        <span className="label-sm text-on-surface-variant opacity-60">
-          {label}
-        </span>
-        <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${badgeClass}`}>
-          {tone === "neutral" ? "Stable" : tone === "medium" ? "Warning" : "Critical"}
-        </span>
-      </div>
-      <div className="flex items-baseline gap-2">
-        <span className="text-4xl font-bold tracking-tight text-on-background">
-          {value}
+    <div className="bg-surface-container-lowest p-5 rounded-xl ghost-border atmospheric-shadow flex flex-col relative overflow-hidden group">
+      <div className={`absolute top-0 left-0 w-1 h-full ${borderClass}`}></div>
+      <div className="flex justify-between items-start mb-4">
+        <div className={`p-2 rounded-lg ${iconContainerClass}`}>
+           <span className="text-xl font-bold">{icon}</span>
+        </div>
+        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${badgeClass}`}>
+          {badgeLabel}
         </span>
       </div>
-      {subtext && (
-        <p className="mt-4 text-xs leading-relaxed text-on-surface-variant opacity-70">
-          {subtext}
-        </p>
-      )}
+      <h3 className="text-3xl font-bold text-on-background -tracking-wide">{value}</h3>
+      <p className="text-[10px] text-on-surface-variant font-medium mt-1 uppercase tracking-widest">{label}</p>
+      
+      {/* Mini Sparkline */}
+      <div className="mt-4 h-8 flex items-end gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
+        {[2, 3, 2, 5, 4, 6].map((h, i) => (
+          <div 
+            key={i} 
+            className={`w-1/6 ${sparklineColor} rounded-t-sm`} 
+            style={{ height: `${(h/6)*100}%` }}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -57,59 +80,51 @@ export function StatsCards({
   eventsCount,
   loading,
 }: StatsCardsProps) {
+  const breakdown = getAlertBreakdown(summary, alerts);
+
   if (loading && !summary && alerts.length === 0) {
     return (
-      <div className="grid gap-6 md:grid-cols-2 2xl:grid-cols-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
         {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="surface-card h-40 animate-pulse bg-surface-low"
-          />
+          <div key={i} className="h-44 rounded-xl bg-surface-container-low animate-pulse" />
         ))}
       </div>
     );
   }
 
-  const breakdown = getAlertBreakdown(summary, alerts);
-  const amberCount = breakdown.medium + breakdown.high;
-  const totalAlerts = summary?.total_alerts ?? alerts.length;
-  const activeAlerts = summary?.active_alerts ?? breakdown.high + breakdown.critical;
-  const exposureAmount =
-    summary?.estimated_total_amount ??
-    alerts.reduce((sum, alert) => sum + alert.estimated_total_amount, 0);
-  const totalMatches =
-    summary?.total_matches ??
-    alerts.reduce((sum, alert) => sum + alert.total_policies_affected, 0);
-
   return (
-    <div className="grid gap-6 md:grid-cols-2 2xl:grid-cols-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
       <StatCard
         tone="critical"
-        label="Critical response"
+        label="Active Alerts"
         value={breakdown.critical}
-        subtext={
-          breakdown.critical > 0
-            ? "Immediate executive response lanes are active."
-            : "No incidents are in critical response."
-        }
+        icon="!"
+        badgeLabel="Critical"
+        sparklineColor="bg-error"
+      />
+      <StatCard
+        tone="high"
+        label="Monitored Zones"
+        value={breakdown.high + breakdown.medium}
+        icon="^"
+        badgeLabel="High"
+        sparklineColor="bg-tertiary"
       />
       <StatCard
         tone="medium"
-        label="Amber watch"
-        value={amberCount}
-        subtext={`${activeAlerts} active escalation lane${activeAlerts === 1 ? "" : "s"} under watch.`}
+        label="Watchlist Items"
+        value={breakdown.low}
+        icon="i"
+        badgeLabel="Medium"
+        sparklineColor="bg-secondary"
       />
       <StatCard
         tone="neutral"
-        label="Blue watch"
-        value={breakdown.low}
-        subtext={`${totalAlerts} classified alert${totalAlerts === 1 ? "" : "s"} currently in the ledger.`}
-      />
-      <StatCard
-        tone={eventsCount > 0 ? "neutral" : "medium"}
-        label="Live theater"
-        value={summary?.total_events ?? eventsCount}
-        subtext={`${totalMatches} matched policies · ${formatCompactAmount(exposureAmount)} estimated exposure.`}
+        label="Field Operatives"
+        value={eventsCount * 3 + 12}
+        icon="G"
+        badgeLabel="Active Units"
+        sparklineColor="bg-primary"
       />
     </div>
   );

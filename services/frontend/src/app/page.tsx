@@ -3,15 +3,12 @@
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { AlertFeed } from "@/components/AlertFeed";
-import { CommandProtocolPanel } from "@/components/CommandProtocolPanel";
 import { EventDetail } from "@/components/EventDetail";
 import { PriorityIncidents } from "@/components/PriorityIncidents";
 import { StatsCards } from "@/components/StatsCards";
 import { EventMap } from "@/components/EventMap";
 import {
-  ALERT_PRIORITY,
   getAlertBreakdown,
-  getAlertTone,
   getLatestDashboardTimestamp,
 } from "@/lib/dashboard";
 import { useDashboard } from "@/hooks/useDashboard";
@@ -27,26 +24,14 @@ export default function DashboardPage() {
   const { events, loading: eventsLoading, refresh: refreshEvents } = useEvents();
   const { alerts, loading: alertsLoading, refresh: refreshAlerts } = useAlerts();
   const { detail, loading: detailLoading } = useEventDetail(selectedEventId);
+  
   const afterPipelineRun = useCallback(
     () => Promise.allSettled([refreshSummary(), refreshEvents(), refreshAlerts()]),
     [refreshAlerts, refreshEvents, refreshSummary]
   );
+  
   const { run, running: pipelineRunning, buttonLabel } =
     usePipelineRun(afterPipelineRun);
-
-  const selectedEvent = useMemo(
-    () => events.find((event) => event.id === selectedEventId) || null,
-    [events, selectedEventId]
-  );
-
-  const highestPriorityAlert = useMemo(
-    () =>
-      [...alerts].sort(
-        (left, right) =>
-          ALERT_PRIORITY[right.alert_level] - ALERT_PRIORITY[left.alert_level]
-      )[0] || null,
-    [alerts]
-  );
 
   const breakdown = useMemo(
     () => getAlertBreakdown(summary, alerts),
@@ -69,127 +54,116 @@ export default function DashboardPage() {
     setSelectedEventId(null);
   }, []);
 
-  const heroState = useMemo(() => {
-    const criticalCount = breakdown.critical;
-    const amberCount = breakdown.medium + breakdown.high;
-
-    if (criticalCount > 0) {
-      return {
-        tone: "critical" as const,
-        label: "Critical response",
-        headline: `${criticalCount} critical incident${criticalCount === 1 ? "" : "s"} need executive coordination.`,
-      };
-    }
-
-    if (amberCount > 0) {
-      return {
-        tone: "medium" as const,
-        label: "Amber watch",
-        headline: `${amberCount} elevated incident${amberCount === 1 ? "" : "s"} are moving through coordinated watch.`,
-      };
-    }
-
-    return {
-      tone: "neutral" as const,
-      label: "Blue watch",
-      headline: "Signals are live and stable across the event theater.",
-    };
-  }, [breakdown]);
-
   return (
-    <div className="flex flex-col gap-10 py-4">
-      {/* Hero Section */}
-      <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
-        <div className="max-w-3xl">
-          <div className="flex items-center gap-3 mb-4">
-             <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${heroState.tone === 'critical' ? 'badge-critical' : heroState.tone === 'medium' ? 'badge-warning' : 'badge-stable'}`}>
-              {heroState.label}
-            </span>
-            <span className="label-sm opacity-40">System Live</span>
-          </div>
-          <h1 className="display-lg text-on-background">
-            {heroState.headline}
-          </h1>
-          <p className="mt-6 text-xl text-on-surface-variant opacity-70 leading-relaxed">
-            Real-time exposure framing and automated catastrophe intelligence for global insurance operations.
-          </p>
+    <div className="max-w-7xl mx-auto space-y-6 pt-8 pb-12 px-4 md:px-0">
+      {/* Page Header */}
+      <div className="flex justify-between items-end mb-8">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight text-on-background mb-1">Global Event Dashboard</h2>
+          <p className="text-sm text-on-surface-variant font-bold uppercase tracking-widest text-[11px]">Real-time threat monitoring and resource allocation.</p>
         </div>
-        <div className="flex flex-col items-end gap-4">
-          <button
-            type="button"
-            onClick={() => void run()}
-            disabled={pipelineRunning}
-            className="metallic-cta min-w-[200px] rounded-xl px-6 py-4 text-sm font-bold shadow-lg transition-all disabled:opacity-50"
-          >
-            {buttonLabel}
-          </button>
-          <p className="label-sm text-[10px] opacity-40">Last pulse: {latestUpdateAt ? new Date(latestUpdateAt).toLocaleTimeString() : 'Awaiting...'}</p>
+        <div className="flex items-center gap-2 text-sm font-bold text-on-surface-variant uppercase tracking-widest text-[10px]">
+          <span className="w-2 h-2 rounded-full bg-secondary-fixed animate-pulse"></span>
+          Live System Status: <span className="text-on-surface">Nominal</span>
         </div>
-      </section>
+      </div>
 
-      {/* Stats Overview */}
-      <section>
-        <StatsCards
-          summary={summary}
-          alerts={alerts}
-          eventsCount={events.length}
-          loading={summaryLoading && alertsLoading}
-        />
-      </section>
+      {/* 1. Global Event Summary (Stat Cards) */}
+      <StatsCards
+        summary={summary}
+        alerts={alerts}
+        eventsCount={events.length}
+        loading={summaryLoading && alertsLoading}
+      />
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
-        {/* Left Column: Incidents & Map */}
-        <div className="xl:col-span-8 space-y-10">
-          <PriorityIncidents
-            alerts={alerts}
-            events={events}
-            loading={eventsLoading}
-            selectedEventId={selectedEventId}
-            onEventSelect={handleEventSelect}
-          />
-
-          <div className="surface-card p-8">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <span className="label-sm text-on-surface-variant opacity-60">Global Event Layer</span>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight text-on-background">Live Catastrophe Map</h2>
-              </div>
-              <div className="flex gap-2">
-                <button className="label-sm bg-surface-low px-4 py-2 rounded-lg text-[10px]">Filter: Active Only</button>
-                <button className="label-sm bg-surface-low px-4 py-2 rounded-lg text-[10px]">Layer: Policy Density</button>
-              </div>
+      {/* Bento Grid Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-auto min-h-[600px]">
+        
+        {/* 2. Interactive Threat Map (8 Columns) */}
+        <div className="lg:col-span-8 bg-surface-container-lowest rounded-xl ghost-border shadow-sm flex flex-col overflow-hidden relative">
+          {/* Map Header Overlay */}
+          <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-start pointer-events-none">
+            <div className="glass-panel px-4 py-2 rounded-md pointer-events-auto shadow-sm">
+              <h3 className="text-[11px] font-black uppercase tracking-widest text-on-background flex items-center gap-2">
+                <span className="text-lg">⊕</span> Global Threat Topography
+              </h3>
             </div>
-            <div className="h-[500px] rounded-2xl overflow-hidden ghost-border relative">
-               <EventMap
-                events={events}
-                selectedEventId={selectedEventId}
-                impactZone={null}
-                onEventSelect={handleEventSelect}
-              />
+            <div className="glass-panel flex p-1 rounded-md pointer-events-auto shadow-sm">
+              <button className="px-3 py-1 text-[10px] font-bold uppercase bg-white text-on-surface rounded shadow-sm">Live</button>
+              <button className="px-3 py-1 text-[10px] font-bold uppercase text-on-surface-variant hover:text-on-surface">Forecast</button>
+            </div>
+          </div>
+
+          <div className="flex-1 bg-surface-container-high relative min-h-[500px]">
+             <EventMap
+              events={events}
+              selectedEventId={selectedEventId}
+              impactZone={null}
+              onEventSelect={handleEventSelect}
+            />
+          </div>
+
+          {/* Map Legend */}
+          <div className="h-12 border-t border-surface-container-high bg-surface-container-lowest flex items-center px-4 justify-between text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-error"></span> Critical Severity</div>
+              <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-tertiary"></span> High Risk</div>
+              <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-primary-fixed-dim"></span> Assessor Deployed</div>
+            </div>
+            <div className="flex items-center gap-2">
+              Overlay: Policyholder Density
             </div>
           </div>
         </div>
 
-        {/* Right Column: Protocols & Feed */}
-        <div className="xl:col-span-4 space-y-10">
-          <CommandProtocolPanel
-            alerts={alerts}
-            summary={summary}
-            latestUpdateAt={latestUpdateAt}
-            selectedEvent={selectedEvent}
-          />
+        {/* Right Column: Protocols & Feed (4 Columns) */}
+        <div className="lg:col-span-4 flex flex-col gap-6">
+          {/* 5. Command Protocols */}
+          <div className="bg-surface-container-lowest rounded-xl ghost-border shadow-sm p-5">
+            <h3 className="text-[10px] font-black text-on-surface uppercase tracking-widest mb-4 border-b border-surface-container-high pb-2">Command Protocols</h3>
+            <div className="space-y-3">
+              <button 
+                onClick={() => void run()}
+                disabled={pipelineRunning}
+                className="w-full flex items-center justify-between p-3 rounded-lg bg-surface hover:bg-surface-container transition-all ghost-border group text-left disabled:opacity-50"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="bg-primary-container p-2 rounded text-on-primary-container group-hover:text-primary transition-colors">
+                    <span>📡</span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-on-surface">{buttonLabel}</div>
+                    <div className="text-[10px] font-bold text-on-surface-variant uppercase tracking-tight">Sync Theater Assets</div>
+                  </div>
+                </div>
+                <span className="text-on-surface-variant opacity-40">→</span>
+              </button>
 
-          <div className="surface-card p-8">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <span className="label-sm text-on-surface-variant opacity-60">Live-Alert Rail</span>
-                <h2 className="mt-2 text-xl font-bold tracking-tight text-on-background">Operational Stream</h2>
-              </div>
-              <span className="badge-stable rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">
-                {alerts.length} Active
-              </span>
+              <Link 
+                href="/readiness"
+                className="w-full flex items-center justify-between p-3 rounded-lg bg-surface hover:bg-surface-container transition-all ghost-border group text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="bg-error-container p-2 rounded text-on-error-container">
+                    <span>⚖️</span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-error">System Readiness</div>
+                    <div className="text-[10px] font-bold text-on-surface-variant uppercase tracking-tight">Resource Allocation Model</div>
+                  </div>
+                </div>
+                <span className="text-on-surface-variant opacity-40">→</span>
+              </Link>
             </div>
-            <div className="h-[600px] overflow-y-auto pr-4 -mr-4 scrollbar-hide">
+          </div>
+
+          {/* 3. Live Activity Feed */}
+          <div className="bg-surface-container-lowest rounded-xl ghost-border shadow-sm flex-1 flex flex-col overflow-hidden min-h-[300px]">
+            <div className="p-4 border-b border-surface-container-high flex justify-between items-center bg-surface-container-low">
+              <h3 className="text-[10px] font-black text-on-surface uppercase tracking-widest">Live Activity</h3>
+              <span className="text-[9px] font-bold text-on-surface-variant bg-surface px-2 py-0.5 rounded-full ghost-border uppercase tracking-widest">Auto-sync</span>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
               <AlertFeed
                 alerts={alerts}
                 loading={alertsLoading}
@@ -201,13 +175,27 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* 4. Active Priority Incidents (Data Table) */}
+      <PriorityIncidents
+        alerts={alerts}
+        events={events}
+        loading={eventsLoading}
+        selectedEventId={selectedEventId}
+        onEventSelect={handleEventSelect}
+      />
+
+      {/* Floating Detail Overlay */}
       {selectedEventId && (
-        <div className="fixed inset-x-0 bottom-0 z-50 p-8 glass-overlay border-t border-on-surface-variant/10 animate-in slide-in-from-bottom duration-500">
-           <EventDetail
-            detail={detail}
-            loading={detailLoading}
-            onClose={handleCloseDetail}
-          />
+        <div className="fixed inset-0 z-[2000] flex items-end justify-center p-8 pointer-events-none">
+          <div className="w-full max-w-5xl bg-surface shadow-atmospheric rounded-3xl border border-outline-variant pointer-events-auto animate-in slide-in-from-bottom duration-500 overflow-hidden border-b-0 rounded-b-none">
+             <div className="max-h-[80vh] overflow-y-auto scrollbar-hide">
+                <EventDetail
+                  detail={detail}
+                  loading={detailLoading}
+                  onClose={handleCloseDetail}
+                />
+             </div>
+          </div>
         </div>
       )}
     </div>

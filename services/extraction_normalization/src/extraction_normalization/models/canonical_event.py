@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Optional
+from typing import Optional, List
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, ConfigDict
 
 
 # ── Enums ────────────────────────────────────────────────────────────────────
@@ -65,6 +65,39 @@ class SeverityInputs(BaseModel):
     wind_speed_kph: Optional[float] = None
 
 
+# ── Trajectory Models ───────────────────────────────────────────────────────
+
+
+class WaypointState(BaseModel):
+    intensity:      Optional[float] = None   # 0–100 normalized
+    speed_kph:      Optional[float] = None
+    direction_deg:  Optional[float] = None   # 0–360°
+    category:       Optional[int]   = None   # Saffir-Simpson / EF scale / etc.
+    radius_km:      Optional[float] = None   # for expanding events (wildfire, flood, tsunami)
+    # Disaster-specific extras stored here too (wave_height_m, wind_speed_kph, etc.)
+    model_config = ConfigDict(extra="allow")  # accept type-specific fields
+
+class Waypoint(BaseModel):
+    t:     datetime
+    lat:   float = Field(ge=-90,  le=90)
+    lon:   float = Field(ge=-180, le=180)
+    state: WaypointState = Field(default_factory=WaypointState)
+
+class TrajectoryData(BaseModel):
+    waypoints:        List[Waypoint]
+    interval_minutes: int
+    current_index:    int = 0          # index into waypoints pointing to "now"
+    total_waypoints:  int              # always == len(waypoints)
+
+    @model_validator(mode="after")
+    def _validate_index(self) -> "TrajectoryData":
+        if not (0 <= self.current_index < self.total_waypoints):
+            raise ValueError("current_index out of range")
+        if self.total_waypoints != len(self.waypoints):
+            raise ValueError("total_waypoints must equal len(waypoints)")
+        return self
+
+
 # ── Canonical Event ─────────────────────────────────────────────────────────
 
 
@@ -111,6 +144,13 @@ class CanonicalEvent(BaseModel):
     )
     region_name: Optional[str] = None
     country_codes: list[str] = Field(default_factory=list)
+
+    # Trajectory (only for mobile/expanding event types)
+    is_mobile: bool = False
+    trajectory: Optional[TrajectoryData] = None
+    trajectory_bounds: Optional[dict] = Field(
+        default=None, description="{min_lat, min_lon, max_lat, max_lon}"
+    )
 
     # Source-specific severity signals
     severity_inputs: SeverityInputs = Field(default_factory=SeverityInputs)
