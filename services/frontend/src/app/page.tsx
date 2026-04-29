@@ -5,6 +5,7 @@ import { useCallback, useMemo, useState } from "react";
 import { AlertFeed } from "@/components/AlertFeed";
 import { EventDetail } from "@/components/EventDetail";
 import { PriorityIncidents } from "@/components/PriorityIncidents";
+import { LatencyPanel } from "@/components/LatencyPanel";
 import { StatsCards } from "@/components/StatsCards";
 import { EventMap } from "@/components/EventMap";
 import {
@@ -183,6 +184,8 @@ export default function DashboardPage() {
         selectedEventId={selectedEventId}
         onEventSelect={handleEventSelect}
       />
+
+      <LatencyPanel />
 
       {/* Floating Detail Overlay */}
       {selectedEventId && (

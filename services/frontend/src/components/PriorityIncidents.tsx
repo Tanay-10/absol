@@ -55,7 +55,7 @@ export function PriorityIncidents({
               <th className="px-6 py-3 w-1/4">Event Identification</th>
               <th className="px-6 py-3 w-1/5">Status/Severity</th>
               <th className="px-6 py-3 w-1/6">Est. Exposure</th>
-              <th className="px-6 py-3 w-1/6">Time Detected</th>
+              <th className="px-6 py-3 w-1/6">Detected (Elapsed)</th>
               <th className="px-6 py-3 text-right">Action</th>
             </tr>
           </thead>
@@ -92,9 +92,31 @@ export function PriorityIncidents({
                     <div className="font-bold text-on-surface">{alert ? formatCompactAmount(alert.estimated_total_amount) : '—'}</div>
                     <div className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider">{alert ? `${alert.total_policies_affected} Policies` : 'Calculating...'}</div>
                   </td>
-                  <td className="px-6 py-4 text-on-surface-variant font-bold text-[11px] uppercase">
-                    {new Date(event.detected_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
-                  </td>
+                  <td className="px-6 py-4">
+                  {(() => {
+                    const ts = (event as any).first_seen_at ?? event.detected_at;
+                    const ms = Date.now() - new Date(ts).getTime();
+                    const mins = ms / 60_000;
+                    const elapsed =
+                      mins < 1 ? 'just now' :
+                      mins < 60 ? `${Math.round(mins)}m ago` :
+                      (() => { const h = Math.floor(mins / 60); const m = Math.round(mins % 60); return m > 0 ? `${h}h ${m}m ago` : `${h}h ago`; })();
+                    const hasAlert = !!alert;
+                    const color =
+                      !hasAlert ? 'text-on-surface-variant' :   // still processing — neutral
+                      mins <= 90 ? 'text-secondary' :            // within SLA — green
+                      mins <= 120 ? 'text-tertiary' :            // approaching — amber
+                      'text-error';                              // breached — red
+                    return (
+                      <div className="flex flex-col gap-0.5">
+                        <span className={`text-[11px] font-black uppercase tracking-wider ${color}`}>{elapsed}</span>
+                        <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider">
+                          {new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
+                        </span>
+                      </div>
+                    );
+                  })()}
+                </td>
                   <td className="px-6 py-4 text-right">
                     <button className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold text-primary border border-outline-variant px-3 py-1.5 rounded hover:bg-surface-container-high bg-white uppercase tracking-widest">
                       Deep Dive

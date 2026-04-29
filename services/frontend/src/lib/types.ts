@@ -39,6 +39,7 @@ export interface DashboardEvent {
   country_codes: string[] | null;
   occurred_at: string;
   detected_at: string;
+  first_seen_at: string;
   is_mobile?: boolean | number; // SQLite might return 0/1
   trajectory?: TrajectoryData;
 }
@@ -144,4 +145,31 @@ export interface PipelineResult {
     matches?: number;
     alert_level?: string;
   }>;
+}
+
+export interface LatencyEvent {
+  event_id: string;
+  title: string;
+  event_type: string;
+  severity_label: string;
+  first_seen_at: string;
+  detected_at: string;
+  occurred_at: string | null;
+  alert_generated_at: string;
+  alert_level: "low" | "medium" | "high" | "critical";
+  estimated_claim_count: number;
+  latency_minutes: number;
+}
+ 
+export interface LatencySummary {
+  avg_latency_minutes: number | null;
+  min_latency_minutes: number | null;
+  max_latency_minutes: number | null;
+  within_2h_pct: number | null;
+  total_events: number;
+}
+ 
+export interface LatencyStats {
+  events: LatencyEvent[];
+  summary: LatencySummary;
 }

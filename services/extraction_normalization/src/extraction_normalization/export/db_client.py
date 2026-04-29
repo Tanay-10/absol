@@ -142,7 +142,11 @@ class DbClient:
 
             cols = list(row.keys())
             placeholders = ", ".join("?" for _ in cols)
-            update_set = ", ".join(f"{c} = excluded.{c}" for c in cols if c != "canonical_id")
+            update_set = ", ".join(
+                f"{c} = excluded.{c}"
+                for c in cols
+                if c not in ("canonical_id", "first_seen_at")
+            )
             sql = (
                 f"INSERT INTO events (id, {', '.join(cols)}) VALUES (?, {placeholders}) "
                 f"ON CONFLICT(canonical_id) DO UPDATE SET {update_set}"

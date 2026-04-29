@@ -1,2 +1,5 @@
 data/*.db
 .worktrees/
+venv/
+.venv/
+env/
