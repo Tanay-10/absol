@@ -8,16 +8,17 @@ export default function ReadinessPage() {
   const model = useReadinessModel();
   const [, setReallocationState] = useState<Record<string, number>>({});
 
-  // Generate stable demo chart data
-  const chartData = useMemo(() => 
-    Array.from({ length: 24 }).map((_, i) => {
-      // Deterministic pseudo-random based on index
-      const seed = (i * 9301 + 49297) % 233280;
-      const value = (seed / 233280);
-      return Math.max(20, value * 100);
-    }),
-    []
-  );
+  const chartData = useMemo(() => {
+    const base = model.snapshot.estimatedClaims || 0;
+    const alertCount = model.snapshot.activeAlerts || 0;
+    return Array.from({ length: 24 }).map((_, i) => {
+      // Peak pressure in first 12 hours, tapering off
+      const decayFactor = Math.exp(-i / 10);
+      const surgeFactor = i < 6 ? 1 + (alertCount * 0.1) : 1;
+      const value = Math.min(100, Math.max(5, (base + alertCount * 10) * decayFactor * surgeFactor));
+      return value;
+    });
+  }, [model.snapshot.estimatedClaims, model.snapshot.activeAlerts]);
 
   const handleResetConfig = useCallback(() => {
     model.resetConfig();
@@ -76,10 +77,10 @@ export default function ReadinessPage() {
             <span className="label-sm opacity-40">Operational Readiness</span>
           </div>
           <h1 className="display-lg text-on-background">
-            System Saturation
+            Claims Surge Readiness
           </h1>
           <p className="mt-6 text-xl text-on-surface-variant opacity-70 leading-relaxed">
-            Hybrid model combining live surge pressure from alerts and events with local staffing and capacity assumptions.
+            Live capacity model combining inbound claim pressure from active events with adjuster staffing and handling capacity assumptions.
           </p>
         </div>
         <div className="flex gap-4">
@@ -128,7 +129,7 @@ export default function ReadinessPage() {
                 { label: "Active Alerts", value: model.snapshot.activeAlerts, sub: `${model.snapshot.activeEvents} events total`, tone: 'critical' },
                 { label: "Est. Claims", value: model.snapshot.estimatedClaims, sub: `${model.snapshot.impactedZones} zones impacted`, tone: 'medium' },
                 { label: "Staffing Util", value: `${Math.round(model.snapshot.staffingUtilization * 100)}%`, sub: `${model.snapshot.totalCapacity} capacity`, tone: 'neutral' },
-                { label: "Reserve Pool", value: model.snapshot.reserveCapacity, sub: "agents available", tone: 'neutral' }
+                { label: "Reserve Pool", value: model.snapshot.reserveCapacity, sub: "adjusters available", tone: 'neutral' }
               ].map((stat, i) => (
                 <div key={i} className="rounded-2xl bg-surface-low p-6">
                   <p className="label-sm text-[10px] opacity-40 mb-3">{stat.label}</p>
@@ -176,7 +177,7 @@ export default function ReadinessPage() {
               <div className="mb-8 flex items-center justify-between">
                 <div>
                   <span className="label-sm text-on-surface-variant opacity-60">Staffing Controls</span>
-                  <h2 className="mt-2 text-2xl font-bold tracking-tight text-on-background">Tactical Reallocation</h2>
+                  <h2 className="mt-2 text-2xl font-bold tracking-tight text-on-background">Adjuster Reallocation</h2>
                 </div>
               </div>
               

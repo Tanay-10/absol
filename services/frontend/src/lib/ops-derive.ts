@@ -34,7 +34,11 @@ function minutesBetween(iso: string | null, now: Date) {
 }
 
 function normalizeFamily(event: DashboardEvent) {
-  return toLower(event.event_family || event.event_type);
+  const family = toLower(event.event_family);
+  if (!family || family === "natural" || family === "other") {
+    return toLower(event.event_type);
+  }
+  return family;
 }
 
 function matchesZone(
