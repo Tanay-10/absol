@@ -25,7 +25,7 @@ async def _run_extraction() -> str:
         stderr=asyncio.subprocess.PIPE,
     )
     stdout, stderr = await proc.communicate()
-    return stdout.decode() + stderr.decode()
+    return stdout.decode("utf-8", errors="replace") + stderr.decode("utf-8", errors="replace")
 
 
 async def _process_event(event: dict) -> dict:

@@ -93,39 +93,43 @@ export function StatsCards({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-      <StatCard
-        tone="critical"
-        label="Active Alerts"
-        value={breakdown.critical}
-        icon="!"
-        badgeLabel="Critical"
-        sparklineColor="bg-error"
-      />
-      <StatCard
-        tone="high"
-        label="Monitored Zones"
-        value={breakdown.high + breakdown.medium}
-        icon="^"
-        badgeLabel="High"
-        sparklineColor="bg-tertiary"
-      />
-      <StatCard
-        tone="medium"
-        label="Watchlist Items"
-        value={breakdown.low}
-        icon="i"
-        badgeLabel="Medium"
-        sparklineColor="bg-secondary"
-      />
-      <StatCard
-        tone="neutral"
-        label="Field Operatives"
-        value={eventsCount * 3 + 12}
-        icon="G"
-        badgeLabel="Active Units"
-        sparklineColor="bg-primary"
-      />
-    </div>
-  );
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+    <StatCard
+      tone="critical"
+      label="Active Alerts"
+      value={alerts.length}
+      icon="!"
+      badgeLabel={alerts.length > 0 ? "Live" : "Clear"}
+      sparklineColor="bg-error"
+    />
+    <StatCard
+      tone="high"
+      label="Events Monitored"
+      value={eventsCount}
+      icon="^"
+      badgeLabel="Tracking"
+      sparklineColor="bg-tertiary"
+    />
+    <StatCard
+      tone="medium"
+      label="Policies at Risk"
+      value={alerts.reduce((sum, a) => sum + (a.total_policies_affected ?? 0), 0)}
+      icon="i"
+      badgeLabel="Exposed"
+      sparklineColor="bg-secondary"
+    />
+    <StatCard
+      tone="neutral"
+      label="Est. Total Exposure"
+      value={
+        alerts.reduce((sum, a) => sum + (a.estimated_total_amount ?? 0), 0) > 0
+          ? "$" + (alerts.reduce((sum, a) => sum + (a.estimated_total_amount ?? 0), 0) / 1000).toFixed(0) + "K"
+          : "$0"
+      }
+      icon="$"
+      badgeLabel="Financials"
+      sparklineColor="bg-primary"
+    />
+  </div>
+);
 }

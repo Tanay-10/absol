@@ -14,7 +14,7 @@ async def dashboard_summary():
         SELECT
             (SELECT COUNT(*) FROM events) AS total_events,
             (SELECT COUNT(*) FROM alerts) AS total_alerts,
-            (SELECT COUNT(*) FROM alerts WHERE alert_level IN ('high', 'critical')) AS active_alerts,
+            (SELECT COUNT(*) FROM alerts) AS active_alerts,
             (SELECT COUNT(*) FROM policies) AS total_policies,
             (SELECT COUNT(*) FROM exposure_matches) AS total_matches,
             (SELECT COALESCE(SUM(estimated_claim_count), 0) FROM alerts) AS estimated_claims,
