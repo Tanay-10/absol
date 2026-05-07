@@ -11,11 +11,30 @@ from backend.db_init import init_database
 from backend.routers import alerts, dashboard, events, pipeline
 
 
+async def _polling_loop():
+    import asyncio
+    import httpx
+    await asyncio.sleep(10)
+    while True:
+        try:
+            async with httpx.AsyncClient() as client:
+                r = await client.post(
+                    "http://127.0.0.1:8001/api/pipeline/run",
+                    timeout=120.0
+                )
+            print(f"[polling_loop] pipeline run complete: {r.status_code}")
+        except Exception as e:
+            print(f"[polling_loop] error: {e}")
+        await asyncio.sleep(300)  # 30s for testing, change to 300 for demo
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await db.connect()
     await init_database(db)
+    import asyncio
+    task = asyncio.create_task(_polling_loop())
     yield
+    task.cancel()
     await db.close()
 
 
