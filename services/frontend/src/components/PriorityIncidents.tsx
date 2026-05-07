@@ -9,6 +9,7 @@ import {
   getRegionLabel,
 } from "@/lib/dashboard";
 import type { Alert, DashboardEvent } from "@/lib/types";
+import { useRouter } from "next/navigation";
 
 interface PriorityIncidentsProps {
   alerts: Alert[];
@@ -25,6 +26,7 @@ export function PriorityIncidents({
   selectedEventId,
   onEventSelect,
 }: PriorityIncidentsProps) {
+  const router = useRouter();
   const alertsByEventId = new Map(alerts.map((alert) => [alert.event_id, alert]));
   const incidentRows = [...events]
     .sort((left, right) => compareIncidents(left, right, alertsByEventId))
@@ -44,9 +46,9 @@ export function PriorityIncidents({
     <div className="bg-surface-container-lowest rounded-xl ghost-border shadow-sm overflow-hidden">
       <div className="p-5 border-b border-surface-container-high flex justify-between items-center">
         <h3 className="text-lg font-bold text-on-background">Active Priority Incidents</h3>
-        <button className="text-sm font-semibold text-primary hover:text-on-surface-variant transition-colors flex items-center gap-1 uppercase tracking-widest text-[10px]">
+        <Link href="/events" className="text-sm font-semibold text-primary hover:text-on-surface-variant transition-colors flex items-center gap-1 uppercase tracking-widest text-[10px]">
           View Full Register &rarr;
-        </button>
+        </Link>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
@@ -118,7 +120,13 @@ export function PriorityIncidents({
                   })()}
                 </td>
                   <td className="px-6 py-4 text-right">
-                    <button className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold text-primary border border-outline-variant px-3 py-1.5 rounded hover:bg-surface-container-high bg-white uppercase tracking-widest">
+                    <button
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold text-primary border border-outline-variant px-3 py-1.5 rounded hover:bg-surface-container-high bg-white uppercase tracking-widest"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/events?event=${event.id}`);
+                      }}
+                    >
                       Deep Dive
                     </button>
                   </td>
